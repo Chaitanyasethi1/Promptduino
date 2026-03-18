@@ -4,9 +4,9 @@ export default function Navbar() {
   return (
     <div className="flex items-center justify-between h-full px-4 text-sm tracking-wide">
       <div className="flex items-center space-x-6">
-        <div className="flex items-center space-x-2 text-[#6392A8] font-bold">
-          <span className="text-xl">⚡</span>
-          <span>PromptDuino</span>
+        <div className="flex items-center space-x-3 text-[#6392A8] font-bold">
+          <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain mix-blend-multiply" />
+          <span className="text-base tracking-widest text-[#3A3A3A] uppercase mt-0.5">PromptDuino</span>
         </div>
         
         <div className="flex items-center space-x-5 text-[#7A7870]">
