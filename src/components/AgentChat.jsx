@@ -2,7 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { Bot, User, Send, Sparkles, Loader2 } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+let ai = null;
+try {
+  if (import.meta.env.VITE_GEMINI_API_KEY) {
+    ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  }
+} catch (e) {
+  console.error("Gemini API missing or failed to initialize", e);
+}
 
 // Using gemini-2.5-flash which is extremely fast for coding tasks
 const MODEL_NAME = 'gemini-2.5-flash';
@@ -39,6 +46,12 @@ export default function AgentChat() {
       
       const prompt = `${SYSTEM_PROMPT}\n\nChat History:\n${chatHistory}\n\n**[user]**: ${userMessage}\n**[model]**:`;
 
+      if (!ai) {
+        setMessages(prev => [...prev, { role: 'model', text: "Error: AI not initialized. Please ensure VITE_GEMINI_API_KEY is configured in Vercel Environment Variables or your local .env.local file." }]);
+        setIsLoading(false);
+        return;
+      }
+      
       const response = await ai.models.generateContent({
         model: MODEL_NAME,
         contents: prompt,
