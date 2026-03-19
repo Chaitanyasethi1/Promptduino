@@ -1,8 +1,11 @@
 import Editor, { useMonaco } from '@monaco-editor/react';
 import { useEffect } from 'react';
+import { useStore } from '../store';
 
 export default function CodeEditor() {
   const monaco = useMonaco();
+  const code = useStore(state => state.code);
+  const setCode = useStore(state => state.setCode);
 
   useEffect(() => {
     if (monaco) {
@@ -28,16 +31,6 @@ export default function CodeEditor() {
     }
   }, [monaco]);
 
-  const defaultCode = `void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(115200);
-  Serial.println("Hello, PromptDuino!");
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-  delay(1000);
-}`;
 
   return (
     <div className="h-full w-full flex flex-col bg-[#F5F3EC]">
@@ -50,7 +43,8 @@ void loop() {
         <Editor
           height="100%"
           defaultLanguage="cpp"
-          defaultValue={defaultCode}
+          value={code}
+          onChange={(val) => setCode(val)}
           theme="warm-light"
           options={{
             minimap: { enabled: false },
