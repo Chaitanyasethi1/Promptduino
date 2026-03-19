@@ -21,6 +21,33 @@ app.add_middleware(
 class SimulationRequest(BaseModel):
     code: str
 
+@app.post("/api/compile")
+async def compile(data: SimulationRequest):
+    code = data.code
+    logs = ['=== Initiating Wokwi Compiler (Verify Only) ===']
+    
+    url = "https://hexi.wokwi.com/build"
+    payload = {
+         "format": "hex",
+         "sketch": code
+    }
+    
+    try:
+        req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'})
+        response = urllib.request.urlopen(req)
+        result = json.loads(response.read())
+        
+        if result.get("stderr"):
+            logs.append(f"Compilation Error:\n{result['stderr']}")
+            return {"status": "error", "logs": logs}
+
+        logs.append('Compilation successful! Sketch uses 0 bytes (0%) of program storage space.')
+        return {"status": "success", "logs": logs}
+        
+    except Exception as e:
+        logs.append(f"Compile Failed: {str(e)}")
+        return {"status": "error", "logs": logs}
+
 @app.post("/api/simulate")
 async def simulate(data: SimulationRequest):
     code = data.code

@@ -3,39 +3,8 @@ import { useStore } from '../store';
 import { useEffect } from 'react';
 
 export default function SimulationPanel() {
-  const code = useStore(state => state.code);
   const isSimulating = useStore(state => state.isSimulating);
-  const setIsSimulating = useStore(state => state.setIsSimulating);
-  const clearSerialLogs = useStore(state => state.clearSerialLogs);
-  const addSerialLog = useStore(state => state.addSerialLog);
-
-  const startSimulation = async () => {
-    setIsSimulating(true);
-    clearSerialLogs();
-    
-    // Using relative path that proxies via Vite locally or routes natively on Vercel
-    const backendUrl = import.meta.env.VITE_BACKEND_URL ? `${import.meta.env.VITE_BACKEND_URL}/api/simulate` : '/api/simulate';
-
-    try {
-      addSerialLog({ type: 'received', text: "Requesting compilation via REST..." });
-      
-      const response = await fetch(backendUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code })
-      });
-      
-      const data = await response.json();
-      
-      if (data.logs && Array.isArray(data.logs)) {
-         data.logs.forEach(logLine => addSerialLog({ type: 'received', text: logLine }));
-      }
-    } catch (err) {
-      addSerialLog({ type: 'received', text: `Connection Error: ${err.message}` });
-    } finally {
-      setIsSimulating(false);
-    }
-  };
+  const uploadCode = useStore(state => state.uploadCode);
 
   return (
     <div className="h-full flex flex-col bg-[#EFECE1]">
@@ -45,7 +14,7 @@ export default function SimulationPanel() {
           Simulation
         </div>
         <button 
-          onClick={startSimulation}
+          onClick={uploadCode}
           disabled={isSimulating}
           className="text-[#A3B0A3]/70 hover:text-[#7A7870] transition-colors disabled:opacity-50" 
           title="Restart Simulator"
@@ -66,7 +35,7 @@ export default function SimulationPanel() {
             <>
               <Monitor size={48} className="mb-4 opacity-50" />
               <p className="font-medium text-[#7A7870]">Simulation View</p>
-              <p className="text-xs pt-1.5 opacity-80">Click Restart to compile via HTTP REST Endpoint</p>
+              <p className="text-xs pt-1.5 opacity-80">Click Top Right Navbar 'Upload' to compile via HTTP REST Endpoint</p>
             </>
           )}
         </div>
