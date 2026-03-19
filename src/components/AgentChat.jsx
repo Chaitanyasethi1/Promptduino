@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bot, User, Send, Sparkles, Loader2 } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
+import { useStore } from '../store';
 
 let ai = null;
 try {
@@ -14,7 +15,11 @@ try {
 // Using gemini-2.5-flash which is extremely fast for coding tasks
 const MODEL_NAME = 'gemini-2.5-flash';
 
-const SYSTEM_PROMPT = `You are the PromptDuino AI Agent. Your job is to help the user write, debug, and understand Arduino C++ code. Provide clear and concise explanations. When generating code, make sure it is ready to be simulated or uploaded directly to an Arduino board.`;
+const SYSTEM_PROMPT = `You are the PromptDuino AI Agent. Your job is to help the user write, debug, and understand Arduino C++ code. Provide clear and concise explanations. 
+CRITICAL RULES:
+1. When generating code, you MUST wrap the complete, runnable Arduino sketch inside a standard markdown cpp code block (e.g. \`\`\`cpp ... \`\`\`).
+2. The UI will automatically extract this block and directly update the user's editor. Do not omit setup() or loop().
+3. Do not provide multiple code blocks unless you want the first one to be injected into the main editor.`;
 
 export default function AgentChat() {
   const [messages, setMessages] = useState([
@@ -23,6 +28,8 @@ export default function AgentChat() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  
+  const setCode = useStore(state => state.setCode);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -41,10 +48,10 @@ export default function AgentChat() {
     setIsLoading(true);
 
     try {
-      // Create chat history format for Gemini
+      const currentCode = useStore.getState().code;
       const chatHistory = messages.map(msg => `**[${msg.role}]**: ${msg.text}`).join('\n');
       
-      const prompt = `${SYSTEM_PROMPT}\n\nChat History:\n${chatHistory}\n\n**[user]**: ${userMessage}\n**[model]**:`;
+      const prompt = `${SYSTEM_PROMPT}\n\n[Current Editor Code]:\n\`\`\`cpp\n${currentCode}\n\`\`\`\n\nChat History:\n${chatHistory}\n\n**[user]**: ${userMessage}\n**[model]**:`;
 
       if (!ai) {
         setMessages(prev => [...prev, { role: 'model', text: "Error: AI not initialized. Please ensure VITE_GEMINI_API_KEY is configured in Vercel Environment Variables or your local .env.local file." }]);
@@ -59,6 +66,12 @@ export default function AgentChat() {
 
       const reply = response.text || "Sorry, I couldn't generate a response.";
       setMessages(prev => [...prev, { role: 'model', text: reply }]);
+      
+      // Automatically extract markdown code block and inject into the CodeEditor
+      const codeMatch = reply.match(/```(?:cpp|c|arduino)?\n([\s\S]*?)```/);
+      if (codeMatch && codeMatch[1]) {
+        setCode(codeMatch[1].trim());
+      }
       
     } catch (error) {
       console.error("AI Error:", error);
