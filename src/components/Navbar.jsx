@@ -13,7 +13,7 @@ export default function Navbar() {
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-3 text-[#6392A8] font-bold mr-2">
           <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain mix-blend-multiply" />
-          <span className="text-base tracking-widest text-[#3A3A3A] uppercase mt-0.5">PromptDuino</span>
+          <span className="text-base font-extrabold tracking-widest text-slate-800 uppercase mt-0.5">PromptDuino</span>
         </div>
         
         {/* Arduino IDE V2 Layout: Toolbar on the left */}
