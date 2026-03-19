@@ -1,6 +1,5 @@
 import { Monitor, RefreshCcw, Loader2 } from 'lucide-react';
 import { useStore } from '../store';
-import { socket } from '../socket';
 import { useEffect } from 'react';
 
 export default function SimulationPanel() {
@@ -8,22 +7,35 @@ export default function SimulationPanel() {
   const isSimulating = useStore(state => state.isSimulating);
   const setIsSimulating = useStore(state => state.setIsSimulating);
   const clearSerialLogs = useStore(state => state.clearSerialLogs);
+  const addSerialLog = useStore(state => state.addSerialLog);
 
-  const startSimulation = () => {
+  const startSimulation = async () => {
     setIsSimulating(true);
     clearSerialLogs();
-    socket.emit('simulate_code', { code });
-  };
+    
+    // Using relative path that proxies via Vite locally or routes natively on Vercel
+    const backendUrl = import.meta.env.VITE_BACKEND_URL ? `${import.meta.env.VITE_BACKEND_URL}/api/simulate` : '/api/simulate';
 
-  useEffect(() => {
-    const handleStatus = (data) => {
-      if (data.status === 'stopped' || data.status === 'error') {
-        setIsSimulating(false);
+    try {
+      addSerialLog({ type: 'received', text: "Requesting compilation via REST..." });
+      
+      const response = await fetch(backendUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code })
+      });
+      
+      const data = await response.json();
+      
+      if (data.logs && Array.isArray(data.logs)) {
+         data.logs.forEach(logLine => addSerialLog({ type: 'received', text: logLine }));
       }
-    };
-    socket.on('simulation_status', handleStatus);
-    return () => socket.off('simulation_status', handleStatus);
-  }, [setIsSimulating]);
+    } catch (err) {
+      addSerialLog({ type: 'received', text: `Connection Error: ${err.message}` });
+    } finally {
+      setIsSimulating(false);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col bg-[#EFECE1]">
@@ -48,13 +60,13 @@ export default function SimulationPanel() {
             <>
               <Loader2 size={48} className="mb-4 text-[#6392A8] animate-spin" />
               <p className="font-medium text-[#7A7870]">Simulating on Server...</p>
-              <p className="text-xs pt-1.5 opacity-80 animate-pulse">Running Wokwi Build</p>
+              <p className="text-xs pt-1.5 opacity-80 animate-pulse">Running Wokwi HTTP Build</p>
             </>
           ) : (
             <>
               <Monitor size={48} className="mb-4 opacity-50" />
               <p className="font-medium text-[#7A7870]">Simulation View</p>
-              <p className="text-xs pt-1.5 opacity-80">Click Restart to compile via Wokwi & Socket</p>
+              <p className="text-xs pt-1.5 opacity-80">Click Restart to compile via HTTP REST Endpoint</p>
             </>
           )}
         </div>

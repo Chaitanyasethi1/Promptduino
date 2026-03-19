@@ -1,6 +1,5 @@
 import { TerminalSquare, Trash2 } from 'lucide-react';
 import { useStore } from '../store';
-import { socket } from '../socket';
 import { useEffect, useRef, useState } from 'react';
 
 export default function SerialMonitor() {
@@ -11,19 +10,16 @@ export default function SerialMonitor() {
   const [inputVal, setInputVal] = useState("");
 
   useEffect(() => {
-    const handleSerial = (data) => addSerialLog({ type: 'received', text: data.text });
-    socket.on('serial_output', handleSerial);
-    return () => socket.off('serial_output', handleSerial);
-  }, [addSerialLog]);
-
-  useEffect(() => {
     autoScrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [serialLogs]);
 
   const handleSend = () => {
     if (!inputVal.trim()) return;
-    socket.emit('serial_input', { text: inputVal });
+    
+    // In HTTP mock version, we just echo it locally
     addSerialLog({ type: 'sent', text: inputVal });
+    addSerialLog({ type: 'received', text: `Echo: ${inputVal}` });
+    
     setInputVal("");
   };
   return (
