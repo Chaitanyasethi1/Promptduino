@@ -4,7 +4,7 @@ import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from db import models, database
+from api.db import models, database
 
 models.Base.metadata.create_all(bind=database.engine)
 
