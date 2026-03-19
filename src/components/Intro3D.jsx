@@ -38,12 +38,15 @@ function NeuralCore() {
         <mesh ref={mesh}>
           <torusKnotGeometry args={[1.8, 0.6, 256, 32]} />
           <MeshDistortMaterial 
-            color="#050505"
-            emissive="#1a1a1a"
-            roughness={0.1}
-            metalness={1}
+            color="#b200ff"
+            emissive="#4c00b0"
+            emissiveIntensity={1.5}
+            roughness={0.2}
+            metalness={0.8}
             distort={0.4}
             speed={2}
+            transparent
+            opacity={0.8}
             clearcoat={1}
             clearcoatRoughness={0.1}
           />
@@ -109,7 +112,7 @@ export default function Intro3D({ onStartApp }) {
       exit={{ opacity: 0, filter: 'brightness(50) blur(20px)' }}
       transition={{ duration: 1.5, ease: "easeInOut" }}
     >
-      <div className="absolute inset-0 w-full h-full cursor-none">
+      <div className="absolute inset-0 w-full h-full">
         <Canvas camera={{ position: [0, 0, 8], fov: 40 }} dpr={[1, 2]} gl={{ antialias: false }}>
           <color attach="background" args={['#050505']} />
           <fog attach="fog" args={['#050505', 5, 15]} />
