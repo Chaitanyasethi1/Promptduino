@@ -36,31 +36,31 @@ function NeuralCore() {
     <group>
       <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
         <mesh ref={mesh}>
-          <torusKnotGeometry args={[1.8, 0.6, 256, 32]} />
+          <torusKnotGeometry args={[1.8, 0.4, 256, 32]} />
           <MeshDistortMaterial 
-            color="#b200ff"
-            emissive="#4c00b0"
-            emissiveIntensity={1.5}
-            roughness={0.2}
-            metalness={0.8}
+            color="#001524"
+            emissive="#000d1a"
+            emissiveIntensity={1}
+            roughness={0.1}
+            metalness={0.9}
             distort={0.4}
             speed={2}
             transparent
-            opacity={0.8}
+            opacity={0.6}
             clearcoat={1}
             clearcoatRoughness={0.1}
           />
         </mesh>
         
         <mesh ref={wire}>
-          <torusKnotGeometry args={[2.0, 0.2, 128, 16]} />
+          <torusKnotGeometry args={[2.0, 0.15, 128, 16]} />
           <meshStandardMaterial 
-            color="#00ffff"
-            emissive="#00bfff"
-            emissiveIntensity={4}
+            color="#6392a8"
+            emissive="#8bc3db"
+            emissiveIntensity={3}
             wireframe
             transparent
-            opacity={0.3}
+            opacity={0.4}
           />
         </mesh>
       </Float>
@@ -73,8 +73,8 @@ function Typography() {
     <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5} position={[0, -0.5, 0]}>
       <Text
         font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZJhjp-Ek-_EeA.woff"
-        fontSize={1}
-        letterSpacing={0.5}
+        fontSize={0.65}
+        letterSpacing={0.35}
         color="#ffffff"
         anchorX="center"
         anchorY="middle"
