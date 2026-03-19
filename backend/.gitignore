@@ -29,12 +29,7 @@ ENV/
 env.bak/
 venv.bak/
 
-# SQLite
-*.db
-*.sqlite3
-
-# Environment Variables
-.env
+# Environment Variables are no longer ignored (for collaborators)
 
 # MacOS
 .DS_Store

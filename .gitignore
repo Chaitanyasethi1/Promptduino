@@ -10,7 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-*.local
+# allowed local `.env` files for collaborators
 
 # Editor directories and files
 .vscode/*
