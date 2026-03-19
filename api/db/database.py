@@ -5,7 +5,7 @@ import os
 
 load_dotenv()
 
-DB_PATH = os.getenv("DB_PATH", "./promptduino.db")
+DB_PATH = os.getenv("DB_PATH", "/tmp/promptduino.db")
 SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 engine = create_engine(
