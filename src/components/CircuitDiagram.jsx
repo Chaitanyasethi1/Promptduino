@@ -266,11 +266,13 @@ export default function CircuitDiagram({ diagram }) {
       return { x: px + 15 + (idx * 20), y: py + 100 };
     };
 
-    const renderWire = (start, end) => {
+    const renderWire = (start, end, i = 0) => {
       const sx = Number(start.x) || 0; const sy = Number(start.y) || 0;
       const ex = Number(end.x) || 0; const ey = Number(end.y) || 0;
-      const midY = (sy + ey) / 2 + (sy < ey ? 40 : -40);
-      return `M ${sx} ${sy} C ${sx} ${midY}, ${ex} ${midY}, ${ex} ${ey}`;
+      // Staggered Orthogonal Routing: Creating a clean 'Ribbon' of 90-degree wires
+      const step = (i % 10) * 12; // Each wire gets a unique horizontal lane
+      const midY = Math.max(sy, ey) + 40 + step;
+      return `M ${sx} ${sy} V ${midY} H ${ex} V ${ey}`;
     };
 
     return (
@@ -300,7 +302,7 @@ export default function CircuitDiagram({ diagram }) {
             const e = getPinPos(conn.to.split(':')[0], conn.to.split(':')[1]);
             const color = conn.color === 'auto' ? '#3b82f6' : (conn.color || '#3b82f6');
             return (
-              <motion.path key={`w-${i}`} d={renderWire(s, e)} stroke={color} strokeWidth="3.2" fill="none" strokeLinecap="round" opacity="0.85"
+              <motion.path key={`w-${i}`} d={renderWire(s, e, i)} stroke={color} strokeWidth="3.2" fill="none" strokeLinecap="round" opacity="0.85"
                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1 }}
                style={{ filter: "url(#shadow)" }} />
             );
