@@ -226,7 +226,7 @@ export default function CircuitDiagram({ diagram }) {
         y = 60 + Math.floor(counts.out / 2) * 140;
         counts.out++; 
       } else { 
-        x = 60 + (counts.mid * 200); 
+        x = 60 + (counts.mid * 260); 
         y = 240; 
         counts.mid++; 
       }
