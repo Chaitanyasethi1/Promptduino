@@ -11,16 +11,18 @@ void loop() {
   // put your main code here, to run repeatedly:
   delay(1000);
 }`,
-  setCode: (code) => set({ code }),
+  setCode: (code) => set({ code, hasSimulated: false }),
   serialLogs: [],
   addSerialLog: (log) => set((state) => ({ serialLogs: [...state.serialLogs, log] })),
   clearSerialLogs: () => set({ serialLogs: [] }),
   isSimulating: false,
   setIsSimulating: (isSimulating) => set({ isSimulating }),
   isCompiling: false,
-  
+  hasSimulated: false,
+  setHasSimulated: (hasSimulated) => set({ hasSimulated }),
+
   compileCode: async () => {
-    set({ isCompiling: true });
+    set({ isCompiling: true, hasSimulated: false });
     set({ serialLogs: [] });
     const { code, addSerialLog } = useStore.getState();
     const backendUrl = import.meta.env.VITE_BACKEND_URL ? `${import.meta.env.VITE_BACKEND_URL}/api/compile` : '/api/compile';
@@ -34,7 +36,7 @@ void loop() {
       });
       const data = await response.json();
       if (data.logs && Array.isArray(data.logs)) {
-         data.logs.forEach(logLine => addSerialLog({ type: 'received', text: logLine }));
+        data.logs.forEach(logLine => addSerialLog({ type: 'received', text: logLine }));
       }
     } catch (err) {
       addSerialLog({ type: 'received', text: `Connection Error: ${err.message}` });
@@ -58,10 +60,16 @@ void loop() {
       });
       const data = await response.json();
       if (data.logs && Array.isArray(data.logs)) {
-         data.logs.forEach(logLine => addSerialLog({ type: 'received', text: logLine }));
+        data.logs.forEach(logLine => addSerialLog({ type: 'received', text: logLine }));
+      }
+      if (data.status === 'success') {
+        set({ hasSimulated: true });
+      } else {
+        set({ hasSimulated: false });
       }
     } catch (err) {
       addSerialLog({ type: 'received', text: `Connection Error: ${err.message}` });
+      set({ hasSimulated: false });
     } finally {
       set({ isSimulating: false });
     }

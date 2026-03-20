@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 export default function SimulationPanel() {
   const isSimulating = useStore(state => state.isSimulating);
+  const hasSimulated = useStore(state => state.hasSimulated);
   const uploadCode = useStore(state => state.uploadCode);
 
   return (
@@ -13,10 +14,10 @@ export default function SimulationPanel() {
           <Monitor size={14} className="mr-2 text-[#6392A8]" />
           Simulation
         </div>
-        <button 
+        <button
           onClick={uploadCode}
           disabled={isSimulating}
-          className="text-[#A3B0A3]/70 hover:text-[#7A7870] transition-colors disabled:opacity-50" 
+          className="text-[#A3B0A3]/70 hover:text-[#7A7870] transition-colors disabled:opacity-50"
           title="Restart Simulator"
         >
           <RefreshCcw size={15} className={isSimulating ? "animate-spin" : ""} />
@@ -30,6 +31,15 @@ export default function SimulationPanel() {
               <Loader2 size={48} className="mb-4 text-[#6392A8] animate-spin" />
               <p className="font-medium text-[#7A7870]">Simulating on Server...</p>
               <p className="text-xs pt-1.5 opacity-80 animate-pulse">Running Wokwi HTTP Build</p>
+            </>
+          ) : hasSimulated ? (
+            <>
+              <div className="relative mb-4">
+                <Monitor size={48} className="text-[#6392A8]" />
+                <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse ring-2 ring-[#F5F3EC]"></div>
+              </div>
+              <p className="font-medium text-[#7A7870]">Simulation Active</p>
+              <p className="text-xs pt-1.5 opacity-80 text-center px-4">Program is running on the mock server.<br />Check the Serial Monitor below for output.</p>
             </>
           ) : (
             <>
