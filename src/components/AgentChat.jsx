@@ -11,7 +11,7 @@ CRITICAL RULES:
 1. When generating code, you MUST wrap the complete, runnable Arduino sketch inside a standard markdown cpp code block (e.g. \`\`\`cpp ... \`\`\`).
 2. Additionally, ALWAYS provide a connection diagram in a JSON code block (e.g. \`\`\`json ... \`\`\`) describing the parts and their pins.
 3. The diagram JSON format: { "parts": [{ "type": "component-type", "id": "id1", "name": "Display Name" }], "connections": [{ "from": "id1:pin1", "to": "id2:pin2", "color": "wire-color" }] }.
-4. You MUST use the EXACT microcontroller requested by the user (like ESP32) in your parts list (e.g. { "type": "esp32", "id": "esp32", "name": "ESP32" }). NEVER default to 'arduino-uno' unless explicitly asked!
+4. You MUST use the EXACT microcontroller requested (like ESP32). Use realistic pin names: 'GPIOx' for ESP32, 'Dx' or 'Ax' for Arduino Uno.
 5. The UI will extract these blocks and update the editor and the simulation diagram automatically. Do not mention limitations; focus on fulfilling the user request.`;
 
 export default function AgentChat() {
