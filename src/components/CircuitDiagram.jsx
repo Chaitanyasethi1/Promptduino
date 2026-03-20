@@ -1,107 +1,98 @@
-import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
-
-const getPinColor = (pinName) => {
-  if (pinName === 'VCC' || pinName === '5V' || pinName === '3V3') return '#dc2626';
-  if (pinName === 'GND') return '#171717';
-  return '#fcd34d';
-};
-
-const ComponentIcon = ({ type, id, name, pins }) => {
-  const typeLower = type?.toLowerCase() || '';
-  const isEsp = typeLower.includes('esp32');
-  const isArduino = typeLower.includes('arduino') || typeLower.includes('uno');
-  const isBreadboard = typeLower.includes('breadboard') || typeLower.includes('board');
-
-  if (isEsp) {
-    // Realistic ESP32 DevKit Layout
+const ComponentIcon = ({ type, name, pins }) => {
+  const t = type?.toLowerCase() || '';
+  
+  // 1. Realistic LED
+  if (t.includes('led')) {
+    const color = t.includes('red') ? '#ef4444' : (t.includes('green') ? '#22c55e' : (t.includes('yellow') ? '#eab308' : '#3b82f6'));
     return (
       <g>
-        {/* Black PCB */}
-        <rect width="140" height="260" rx="4" fill="#121212" stroke="#2a2a2a" strokeWidth="2" />
-        {/* Silver Module Shield (ESP-WROOM-32) */}
-        <rect x="35" y="10" width="70" height="60" rx="3" fill="#a1a1aa" stroke="#71717a" />
-        <rect x="50" y="25" width="40" height="30" rx="2" fill="#52525b" />
-        <text x="70" y="45" textAnchor="middle" fill="#d4d4d8" fontSize="6px" fontWeight="bold">ESP32-WROOM</text>
-        
-        {/* Header Pins Left */}
-        {pins.slice(0, Math.ceil(pins.length / 2)).map((pin, i) => {
-          const pinY = 80 + (i * 12);
-          return (
-            <g key={pin}>
-              <rect x="2" y={pinY} width="15" height="4" fill="#4b5563" />
-              <rect x="0" y={pinY+1} width="2" height="2" fill="#d97706" /> {/* Golden connector dot */}
-              <text x="20" y={pinY+3.5} fill="#94a3b8" fontSize="7px" fontWeight="bold" fontFamily="monospace">{pin}</text>
-            </g>
-          );
-        })}
-        
-        {/* Header Pins Right */}
-        {pins.slice(Math.ceil(pins.length / 2)).map((pin, i) => {
-          const pinY = 80 + (i * 12);
-          return (
-            <g key={pin}>
-              <rect x="123" y={pinY} width="15" height="4" fill="#4b5563" />
-              <rect x="138" y={pinY+1} width="2" height="2" fill="#d97706" />
-              <text x="120" y={pinY+3.5} textAnchor="end" fill="#94a3b8" fontSize="7px" fontWeight="bold" fontFamily="monospace">{pin}</text>
-            </g>
-          );
-        })}
-        <text x="70" y="245" textAnchor="middle" fill="#fff" fontSize="10px" fontWeight="bold">ESP32 DEVKIT</text>
+        <defs>
+          <radialGradient id={`grad-led-${color}`} cx="30%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#fff" stopOpacity="0.8" />
+            <stop offset="100%" stopColor={color} />
+          </radialGradient>
+        </defs>
+        <rect x="14" y="30" width="2" height="30" fill="#a1a1aa" /> {/* Cathode */}
+        <rect x="24" y="30" width="2" height="40" fill="#a1a1aa" /> {/* Anode */}
+        <path d="M 10 30 L 30 30 L 30 15 A 10 10 0 0 0 10 15 Z" fill={`url(#grad-led-${color})`} />
       </g>
     );
   }
 
-  if (isArduino) {
-    // Realistic Arduino Uno Layout
+  // 2. Realistic Button
+  if (t.includes('button') || t.includes('switch')) {
+    const color = t.includes('red') ? '#ef4444' : (t.includes('blue') ? '#3b82f6' : '#22c55e');
     return (
       <g>
-        <rect width="200" height="150" rx="8" fill="#1e3a8a" stroke="#172554" strokeWidth="3" />
-        <rect x="10" y="30" width="40" height="30" rx="2" fill="#cbd5e1" stroke="#94a3b8" /> {/* USB Port */}
-        <rect x="10" y="90" width="30" height="40" rx="2" fill="#1f2937" /> {/* DC Jack */}
-        <rect x="60" y="10" width="120" height="10" rx="1" fill="#111" /> {/* Top Header */}
-        <rect x="60" y="130" width="120" height="10" rx="1" fill="#111" /> {/* Bottom Header */}
-        <circle cx="150" cy="75" r="30" fill="#1e40af" stroke="#3b82f6" strokeWidth="1" opacity="0.5" />
-        <text x="120" y="80" textAnchor="middle" fill="#fff" fontSize="12px" fontWeight="black" opacity="0.8">ARDUINO UNO</text>
-
-        {/* Dynamic Pins for Arduino mapped to headers */}
-        {pins.map((pin, i) => {
-          const isTop = i < pins.length / 2;
-          const pinX = 65 + ((i % Math.ceil(pins.length/2)) * 12);
-          const pinY = isTop ? 10 : 130;
-          return (
-            <g key={pin}>
-              <rect x={pinX} y={pinY} width="8" height="10" fill="#333" />
-              <text x={pinX+4} y={isTop ? 28 : 125} textAnchor="middle" fill="#94a3b8" fontSize="7px">{pin}</text>
-            </g>
-          );
-        })}
+        <rect width="50" height="50" rx="4" fill="#3f3f46" stroke="#18181b" strokeWidth="2" />
+        <circle cx="25" cy="25" r="18" fill="#18181b" />
+        <circle cx="25" cy="25" r="15" fill={color} stroke="#000" strokeWidth="1" />
+        <rect x="-4" y="10" width="8" height="4" fill="#a1a1aa" />
+        <rect x="-4" y="36" width="8" height="4" fill="#a1a1aa" />
+        <rect x="46" y="10" width="8" height="4" fill="#a1a1aa" />
+        <rect x="46" y="36" width="8" height="4" fill="#a1a1aa" />
       </g>
     );
   }
 
-  // Draw universal components dynamically based on pins for sensors/modules
-  const pinCount = pins.length || 4;
-  const width = isBreadboard ? 300 : Math.max(120, pinCount * 22);
-  const height = 45;
+  // 3. Realistic Resistor
+  if (t.includes('resistor')) {
+    return (
+      <g>
+        <rect x="0" y="8" width="80" height="4" fill="#a1a1aa" />
+        <rect x="20" y="0" width="40" height="20" rx="10" fill="#d4d4d8" />
+        <rect x="28" y="0" width="4" height="20" fill="#92400e" /> {/* Brown */}
+        <rect x="36" y="0" width="4" height="20" fill="#000" />    {/* Black */}
+        <rect x="44" y="0" width="4" height="20" fill="#ef4444" /> {/* Red */}
+        <rect x="52" y="0" width="2" height="20" fill="#fbbf24" /> {/* Gold */}
+      </g>
+    );
+  }
 
+  // 4. Realistic Buzzer (Piezo)
+  if (t.includes('buzzer') || t.includes('piezo')) {
+    return (
+      <g>
+        <circle cx="40" cy="40" r="40" fill="#18181b" stroke="#3f3f46" strokeWidth="3" />
+        <circle cx="40" cy="40" r="30" fill="none" stroke="#3f3f46" strokeWidth="1" />
+        <circle cx="40" cy="40" r="20" fill="none" stroke="#3f3f46" strokeWidth="1" />
+        <circle cx="40" cy="40" r="5" fill="#000" />
+      </g>
+    );
+  }
+
+  // 5. Realistic ESP32-C3 Top-Down
+  if (t.includes('esp32') || t.includes('c3')) {
+    return (
+      <g>
+        <rect width="180" height="150" rx="6" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
+        <rect x="60" y="20" width="60" height="50" rx="4" fill="#a1a1aa" />
+        <text x="90" y="55" textAnchor="middle" fill="#18181b" fontSize="6px" fontWeight="bold">ESP32-C3</text>
+        <rect x="20" y="110" width="20" height="20" fill="#3f3f46" /> {/* Boot */}
+        <rect x="140" y="110" width="20" height="20" fill="#3f3f46" /> {/* Reset */}
+        
+        {/* Top Pins */}
+        {pins.slice(0, Math.ceil(pins.length/2)).map((p, i) => (
+          <circle key={p} cx={25 + (i * 15)} cy="5" r="3" fill="#fbbf24" />
+        ))}
+         {/* Bottom Pins */}
+         {pins.slice(Math.ceil(pins.length/2)).map((p, i) => (
+          <circle key={p} cx={25 + (i * 15)} cy="145" r="3" fill="#fbbf24" />
+        ))}
+      </g>
+    );
+  }
+
+  // Fallback for others (like 7Seg or Chips)
   return (
     <g>
-      <rect width={width} height={height} rx="4" fill="#0369a1" stroke="#075985" strokeWidth="2.5" />
-      <rect x="2" y="2" width={width-4} height={height-4} rx="2" fill="#0ea5e9" />
-      <text x={width/2} y={height/2 + 4} textAnchor="middle" fill="#fff" fontSize="10px" fontWeight="bold" fontFamily="monospace">
-        {(name || type).toUpperCase()}
-      </text>
-      {pins.map((pin, i) => {
-        const pinX = 12 + (i * 22);
-        if (pinX > width - 10) return null;
-        return (
-          <g key={pin}>
-            <rect x={pinX} y={height} width="3" height="10" fill="#fcd34d" />
-            <circle cx={pinX+1.5} cy={height+14} r="3.5" fill="#f59e0b" stroke="#fff" strokeWidth="0.5" />
-            <text x={pinX+1.5} y={height-5} textAnchor="middle" fill="#0f172a" fontSize="7px" fontWeight="bold">{pin}</text>
-          </g>
-        );
+      <rect width="80" height="120" rx="4" fill="#09090b" stroke="#3f3f46" strokeWidth="2" />
+      <text x="40" y="20" textAnchor="middle" fill="#71717a" fontSize="8px" fontWeight="bold">{(name || type).toUpperCase()}</text>
+      {pins.map((p, i) => {
+        const isLeft = i < pins.length / 2;
+        const x = isLeft ? 0 : 80;
+        const y = 30 + (i % Math.ceil(pins.length/2)) * 15;
+        return <rect key={p} x={x-2} y={y} width="4" height="2" fill="#a1a1aa" />;
       })}
     </g>
   );
@@ -110,174 +101,97 @@ const ComponentIcon = ({ type, id, name, pins }) => {
 export default function CircuitDiagram({ diagram }) {
   if (!diagram || !diagram.parts) return null;
 
-  // 1. Analyze pins and connections
   const partPins = {};
   if (diagram.connections) {
     diagram.connections.forEach(conn => {
       if (!conn.from || !conn.to) return;
-      const [fromPart, fromPin] = conn.from.split(':');
-      const [toPart, toPin] = conn.to.split(':');
-      
-      if (fromPart && fromPin) {
-        if (!partPins[fromPart]) partPins[fromPart] = new Set();
-        partPins[fromPart].add(fromPin);
-      }
-      if (toPart && toPin) {
-        if (!partPins[toPart]) partPins[toPart] = new Set();
-        partPins[toPart].add(toPin);
-      }
+      const [fP, fPin] = conn.from.split(':');
+      const [tP, tPin] = conn.to.split(':');
+      if (!partPins[fP]) partPins[fP] = new Set();
+      if (!partPins[tP]) partPins[tP] = new Set();
+      partPins[fP].add(fPin); partPins[tP].add(tPin);
     });
   }
 
-  // 2. Synthesize missing parts and compute Smart Auto-Layout
   const completeParts = [...(diagram.parts || [])];
-  
-  // Synthesize any parts found in connections but missing from the parts array
-  Object.keys(partPins).forEach(partId => {
-    if (!completeParts.find(p => p.id === partId)) {
-      completeParts.push({ id: partId, type: partId, name: partId.toUpperCase() });
-    }
+  Object.keys(partPins).forEach(id => {
+    if (!completeParts.find(p => p.id === id)) completeParts.push({ id, type: id, name: id.toUpperCase() });
   });
 
-  let mcuCount = 0;
-  let inputCount = 0;
-  let outputCount = 0;
-
-  const partsWithPos = completeParts.map((part) => {
-    const typeStr = part.type?.toLowerCase() || '';
-    const nameStr = part.name?.toLowerCase() || '';
-    const idStr = part.id?.toLowerCase() || '';
-    const isMcu = typeStr.includes('arduino') || typeStr.includes('esp') || idStr.includes('esp') || idStr.includes('uno');
-    const isOutput = typeStr.includes('led') || typeStr.includes('buzzer') || typeStr.includes('lcd') || typeStr.includes('display') || nameStr.includes('screen');
+  let counts = { mcu: 0, out: 0, mid: 0 };
+  const partsWithPos = completeParts.map((p) => {
+    const t = p.type?.toLowerCase() || '';
+    const isMcu = t.includes('esp') || t.includes('uno');
+    const isBig = t.includes('buzzer') || t.includes('7seg');
     
-    let xStrata = 320;
-    let yDelta = 40;
-    
-    if (isMcu) {
-      xStrata = 40;
-      yDelta = 60 + (mcuCount * 300);
-      mcuCount++;
-    } else if (isOutput) {
-      xStrata = 600;
-      yDelta = 60 + (outputCount * 160);
-      outputCount++;
-    } else {
-      xStrata = 320; // Sensor/Middle
-      yDelta = 60 + (inputCount * 160);
-      inputCount++;
+    let x = 350, y = 60;
+    if (isMcu) { x = 320; y = 350; counts.mcu++; }
+    else if (t.includes('button')) { 
+      x = 100 + (counts.out % 2) * 450; 
+      y = 80 + Math.floor(counts.out / 2) * 120;
+      counts.out++; 
     }
-    
-    return {
-      ...part,
-      pins: Array.from(partPins[part.id] || []),
-      x: xStrata,
-      y: yDelta,
-    };
+    else { x = 120 + (counts.mid * 100); y = 250; counts.mid++; }
+
+    return { ...p, pins: Array.from(partPins[p.id] || []), x, y };
   });
 
-  const getPinPos = (partId, pinName) => {
-    const part = partsWithPos.find(p => p.id === partId);
-    if (!part) return { x: 0, y: 0 };
-    
-    const typeLower = part.type?.toLowerCase() || '';
-    const isEsp = typeLower.includes('esp32');
-    const isArduino = typeLower.includes('arduino') || typeLower.includes('uno');
-    const pinIndex = part.pins.indexOf(pinName);
+  const getPinPos = (pId, pName) => {
+    const p = partsWithPos.find(part => part.id === pId);
+    if (!p) return { x: 0, y: 0 };
+    const t = p.type?.toLowerCase() || '';
+    const idx = p.pins.indexOf(pName);
 
-    if (isEsp) {
-      const half = Math.ceil(part.pins.length / 2);
-      if (pinIndex < half) {
-        return { x: part.x, y: part.y + 80 + (pinIndex * 12) + 2 };
-      } else {
-        return { x: part.x + 140, y: part.y + 80 + ((pinIndex - half) * 12) + 2 };
-      }
+    if (t.includes('led')) return { x: p.x + (idx === 0 ? 15 : 25), y: p.y + (idx === 0 ? 30 : 30) };
+    if (t.includes('button')) {
+      const coords = [{x:0, y:12}, {x:0, y:38}, {x:50, y:12}, {x:50, y:38}];
+      const c = coords[idx % 4];
+      return { x: p.x + c.x, y: p.y + c.y };
     }
-
-    if (isArduino) {
-      const half = Math.ceil(part.pins.length / 2);
-      const isTop = pinIndex < half;
-      return { 
-        x: part.x + 65 + ((pinIndex % half) * 12) + 4, 
-        y: part.y + (isTop ? 10 : 140) 
-      };
+    if (t.includes('resistor')) return { x: p.x + (idx === 0 ? 0 : 80), y: p.y + 10 };
+    if (t.includes('esp32')) {
+      const half = Math.ceil(p.pins.length / 2);
+      return { x: p.x + 25 + (idx % half) * 15, y: p.y + (idx < half ? 5 : 145) };
     }
-
-    // Dynamic Generic Pins (Bottom Edge)
-    const pinX = part.x + 12 + (Math.max(pinIndex, 0) * 22) + 1.5;
-    const isBreadboard = typeLower.includes('breadboard');
-    const pinY = part.y + (isBreadboard ? 60 : 45) + 14; 
-    
-    return { x: pinX, y: pinY };
+    return { x: p.x + 40, y: p.y + 60 };
   };
 
-  // 3. Create Orthogonal Manhattan routing with TIERED LANES
-  const renderWire = (start, end, idx) => {
-    // Determine a shared horizontal 'highway' vertical coordinate
-    // For ESP/Arduino boards, we may need a lower baseline to avoid crossing the board itself
-    const baselineY = Math.max(start.y, end.y) + 40;
-    const midY = baselineY + (idx * 6);
-    
-    return `M ${start.x} ${start.y} 
-            L ${start.x} ${midY} 
-            L ${end.x} ${midY} 
-            L ${end.x} ${end.y}`;
+  const renderWire = (start, end) => {
+    const midX = (start.x + end.x) / 2;
+    const midY = Math.max(start.y, end.y) + 80;
+    return `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`;
   };
 
   return (
-    <svg className="w-full h-full" viewBox="0 0 850 600">
-      <defs>
-        <pattern id="dot-grid" width="25" height="25" patternUnits="userSpaceOnUse">
-          <circle cx="2" cy="2" r="1" fill="#cbd5e1" opacity="0.4"/>
-        </pattern>
-      </defs>
+    <div className="w-full h-full bg-[#18181b] overflow-hidden rounded-lg border border-[#27272a]">
+      <svg className="w-full h-full" viewBox="0 0 850 600">
+        <defs>
+          <pattern id="dark-grid" width="30" height="30" patternUnits="userSpaceOnUse">
+             <circle cx="2" cy="2" r="1.2" fill="#3f3f46" opacity="0.3"/>
+          </pattern>
+          <filter id="shadow">
+            <feDropShadow dx="1" dy="2" stdDeviation="2" floodOpacity="0.5" />
+          </filter>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#dark-grid)" />
 
-      <rect width="100%" height="100%" fill="url(#dot-grid)" />
+        {diagram.connections?.map((conn, i) => {
+          const s = getPinPos(conn.from.split(':')[0], conn.from.split(':')[1]);
+          const e = getPinPos(conn.to.split(':')[0], conn.to.split(':')[1]);
+          const color = conn.color === 'auto' ? '#3b82f6' : (conn.color || '#3b82f6');
+          return (
+            <motion.path key={i} d={renderWire(s, e)} stroke={color} strokeWidth="3" fill="none" strokeLinecap="round"
+             initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5 }}
+             style={{ filter: "url(#shadow)" }} />
+          );
+        })}
 
-      {/* Wires Layer */}
-      {diagram.connections && diagram.connections.map((conn, idx) => {
-        if (!conn.from || !conn.to) return null;
-        const [fromPart, fromPin] = conn.from.split(':');
-        const [toPart, toPin] = conn.to.split(':');
-        
-        const start = getPinPos(fromPart, fromPin);
-        const end = getPinPos(toPart, toPin);
-
-        let wireColor = conn.color;
-        if (!wireColor || wireColor === 'auto') {
-           const pLower = (fromPin + toPin).toLowerCase();
-           if (pLower.includes('gnd')) wireColor = '#000';
-           else if (pLower.includes('vcc') || pLower.includes('5v') || pLower.includes('3v3')) wireColor = '#ef4444';
-           else wireColor = `hsl(${(idx * 40) % 360}, 70%, 45%)`; // Distinct colors for signals
-        }
-
-        return (
-          <motion.path
-            key={`wire-${idx}`}
-            d={renderWire(start, end, idx)}
-            stroke={wireColor}
-            strokeWidth="2.2"
-            fill="none"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 1, ease: "easeInOut" }}
-            style={{ filter: "drop-shadow(1px 2px 3px rgb(0 0 0 / 0.15))" }}
-          />
-        );
-      })}
-
-      {/* Components Layer */}
-      {partsWithPos.map((part) => (
-        <motion.g
-          key={part.id}
-          initial={{ x: part.x, y: part.y - 30, opacity: 0 }}
-          animate={{ x: part.x, y: part.y, opacity: 1 }}
-          transition={{ type: 'spring', damping: 15, stiffness: 100 }}
-        >
-          <ComponentIcon type={part.type} color={part.color} name={part.name} pins={part.pins} />
-        </motion.g>
-      ))}
-    </svg>
+        {partsWithPos.map(p => (
+          <motion.g key={p.id} transform={`translate(${p.x}, ${p.y})`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <ComponentIcon type={p.type} name={p.name} pins={p.pins} />
+          </motion.g>
+        ))}
+      </svg>
+    </div>
   );
 }
