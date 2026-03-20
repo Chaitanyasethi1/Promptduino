@@ -12,8 +12,8 @@ try {
   console.error("Gemini API missing or failed to initialize", e);
 }
 
-// Using gemini-1.5-flash which is extremely stable and widely available
-const MODEL_NAME = 'gemini-1.5-flash';
+// Using gemini-2.5-flash which is extremely fast for coding tasks
+const MODEL_NAME = 'gemini-2.5-flash';
 
 const SYSTEM_PROMPT = `You are the PromptDuino AI Agent. Your job is to help the user write, debug, and understand Arduino C++ code for any microcontroller (Arduino Uno, ESP32, ESP8266, etc.) and any census/actuator.
 CRITICAL RULES:
@@ -63,9 +63,12 @@ export default function AgentChat() {
         return;
       }
       
-      const model = ai.getGenerativeModel({ model: MODEL_NAME });
-      const result = await model.generateContent(prompt);
-      const reply = result.response.text() || "Sorry, I couldn't generate a response.";
+      const response = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: prompt,
+      });
+
+      const reply = response.text || "Sorry, I couldn't generate a response.";
       setMessages(prev => [...prev, { role: 'model', text: reply }]);
       
       // 1. Extract the primary code block (usually CPP)
