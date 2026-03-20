@@ -1,22 +1,23 @@
 const ComponentIcon = ({ type, name, id, pins = [] }) => {
   const t = type?.toLowerCase() || '';
   const safePins = (Array.isArray(pins) ? pins : []).filter(p => typeof p === 'string' && p.length > 0);
-  const safeId = String(id || 'unknown').replace(/\s+/g, '_');
+  const safeId = String(id || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');
   
   // 1. Realistic LED
   if (t.includes('led')) {
-    const color = t.includes('red') ? '#ef4444' : (t.includes('green') ? '#22c55e' : (t.includes('yellow') ? '#eab308' : '#3b82f6'));
+    const rawColor = t.includes('red') ? '#ef4444' : (t.includes('green') ? '#22c55e' : (t.includes('yellow') ? '#eab308' : '#3b82f6'));
+    const safeColorId = rawColor.replace('#', 'hex_');
     return (
       <g>
         <defs>
-          <radialGradient id={`grad-led-${safeId}-${color}`} cx="30%" cy="30%" r="70%">
+          <radialGradient id={`grad-led-${safeId}-${safeColorId}`} cx="30%" cy="30%" r="70%">
             <stop offset="0%" stopColor="#fff" stopOpacity="0.8" />
-            <stop offset="100%" stopColor={color} />
+            <stop offset="100%" stopColor={rawColor} />
           </radialGradient>
         </defs>
         <rect x="14" y="30" width="2" height="30" fill="#a1a1aa" />
         <rect x="24" y="30" width="2" height="40" fill="#a1a1aa" />
-        <path d="M 10 30 L 30 30 L 30 15 A 10 10 0 0 0 10 15 Z" fill={`url(#grad-led-${safeId}-${color})`} />
+        <path d="M 10 30 L 30 30 L 30 15 A 10 10 0 0 0 10 15 Z" fill={`url(#grad-led-${safeId}-${safeColorId})`} />
       </g>
     );
   }
@@ -141,31 +142,40 @@ export default function CircuitDiagram({ diagram }) {
         const [fP, fPin] = conn.from.split(':');
         const [tP, tPin] = conn.to.split(':');
         if (!fP || !fPin || !tP || !tPin) return;
+
         if (!partPins[fP]) partPins[fP] = new Set();
         if (!partPins[tP]) partPins[tP] = new Set();
         partPins[fP].add(fPin); partPins[tP].add(tPin);
       });
     }
 
-    const completeParts = [...(diagram.parts || [])];
+    const uniquePartsMap = new Map();
+    (diagram.parts || []).forEach(p => { if (p.id) uniquePartsMap.set(p.id, p); });
     Object.keys(partPins).forEach(id => {
-      if (!completeParts.find(p => p.id === id)) completeParts.push({ id, type: id, name: id.toUpperCase() });
+      if (!uniquePartsMap.has(id)) uniquePartsMap.set(id, { id, type: id, name: id.toUpperCase() });
     });
+    const completeParts = Array.from(uniquePartsMap.values());
 
     let counts = { mcu: 0, out: 0, mid: 0 };
     const partsWithPos = completeParts.map((p) => {
-      const t = p.type?.toLowerCase() || '';
+      const t = String(p.type || '').toLowerCase();
       const isMcu = t.includes('esp') || t.includes('uno') || t.includes('arduino');
       const isOutput = t.includes('lcd') || t.includes('led') || t.includes('servo') || t.includes('buzzer');
       
       let x = 350, y = 60;
-      if (isMcu) { x = 300; y = 380 + (counts.mcu * 160); counts.mcu++; }
-      else if (isOutput) { 
+      if (isMcu) { 
+        x = 300; 
+        y = 380 + (counts.mcu * 160); 
+        counts.mcu++; 
+      } else if (isOutput) { 
         x = 60 + (counts.out % 2) * 550; 
         y = 60 + Math.floor(counts.out / 2) * 140;
         counts.out++; 
+      } else { 
+        x = 60 + (counts.mid * 200); 
+        y = 240; 
+        counts.mid++; 
       }
-      else { x = 60 + (counts.mid * 200); y = 240; counts.mid++; }
 
       return { ...p, pins: Array.from(partPins[p.id] || []), x, y };
     });
@@ -173,34 +183,36 @@ export default function CircuitDiagram({ diagram }) {
     const getPinPos = (pId, pName) => {
       const p = partsWithPos.find(part => part.id === pId);
       if (!p) return { x: 0, y: 0 };
-      const t = p.type?.toLowerCase() || '';
+      const t = String(p.type || '').toLowerCase();
       const safePins = Array.isArray(p.pins) ? p.pins : [];
       const idx = Math.max(0, safePins.indexOf(pName));
+      const px = Number(p.x) || 0;
+      const py = Number(p.y) || 0;
 
-      if (t.includes('led')) return { x: (p.x || 0) + (idx === 0 ? 15 : 25), y: (p.y || 0) + 30 };
+      if (t.includes('led')) return { x: px + (idx === 0 ? 15 : 25), y: py + 30 };
       if (t.includes('button')) {
         const coords = [{x:0, y:12}, {x:0, y:38}, {x:50, y:12}, {x:50, y:38}];
         const c = coords[idx % 4] || coords[0];
-        return { x: (p.x || 0) + c.x, y: (p.y || 0) + c.y };
+        return { x: px + c.x, y: py + c.y };
       }
       if (t.includes('uno') || t.includes('arduino')) {
-        return { x: (p.x || 0) + 75 + (idx % 10) * 11, y: (p.y || 0) + (idx < 10 ? 11 : 139) };
+        return { x: px + 75 + (idx % 10) * 11, y: py + (idx < 10 ? 11 : 139) };
       }
-      if (t.includes('lcd')) return { x: (p.x || 0) + 30 + (idx % 16) * 10, y: (p.y || 0) };
-      if (t.includes('servo')) return { x: (p.x || 0) + 90, y: (p.y || 0) + 12 + (idx * 6) };
-      if (t.includes('ultra')) return { x: (p.x || 0) + 35 + (idx * 10), y: (p.y || 0) + 55 };
-      if (t.includes('dht')) return { x: (p.x || 0) + 15 + (idx * 10), y: (p.y || 0) + 85 };
+      if (t.includes('lcd')) return { x: px + 30 + (idx % 16) * 10, y: py };
+      if (t.includes('servo')) return { x: px + 90, y: py + 12 + (idx * 6) };
+      if (t.includes('ultra')) return { x: px + 35 + (idx * 10), y: py + 55 };
+      if (t.includes('dht')) return { x: px + 15 + (idx * 10), y: py + 85 };
       if (t.includes('esp32')) {
         const half = Math.max(1, Math.ceil(safePins.length / 2));
-        return { x: (p.x || 0) + 25 + (idx % half) * 15, y: (p.y || 0) + (idx < half ? 5 : 145) };
+        return { x: px + 25 + (idx % half) * 15, y: py + (idx < half ? 5 : 145) };
       }
       // Generic Module Fallback Pin
-      return { x: (p.x || 0) + 10 + (idx * 14), y: (p.y || 0) + 90 };
+      return { x: px + 10 + (idx * 14), y: py + 90 };
     };
 
     const renderWire = (start, end) => {
-      const sx = start.x || 0; const sy = start.y || 0;
-      const ex = end.x || 0; const ey = end.y || 0;
+      const sx = Number(start.x) || 0; const sy = Number(start.y) || 0;
+      const ex = Number(end.x) || 0; const ey = Number(end.y) || 0;
       const midY = Math.max(sy, ey) + 80;
       return `M ${sx} ${sy} C ${sx} ${midY}, ${ex} ${midY}, ${ex} ${ey}`;
     };
@@ -225,13 +237,13 @@ export default function CircuitDiagram({ diagram }) {
             const color = conn.color === 'auto' ? '#3b82f6' : (conn.color || '#3b82f6');
             return (
               <motion.path key={`w-${i}`} d={renderWire(s, e)} stroke={color} strokeWidth="2.8" fill="none" strokeLinecap="round"
-               initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, delay: i * 0.05 }}
+               initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2 }}
                style={{ filter: "url(#shadow)" }} />
             );
           })}
 
-          {partsWithPos.map(p => (
-            <motion.g key={p.id} transform={`translate(${p.x || 0}, ${p.y || 0})`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          {partsWithPos.map((p, i) => (
+            <motion.g key={`comp-${p.id}-${i}`} transform={`translate(${p.x || 0}, ${p.y || 0})`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <ComponentIcon type={p.type} name={p.name} id={p.id} pins={p.pins} />
             </motion.g>
           ))}
@@ -244,7 +256,8 @@ export default function CircuitDiagram({ diagram }) {
       <div className="w-full h-full flex flex-col items-center justify-center bg-[#18181b] p-6 text-center">
         <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl max-w-xs">
           <p className="text-red-400 text-sm font-bold mb-2 uppercase tracking-widest font-mono">Sim Error</p>
-          <p className="text-zinc-400 text-xs">Waiting for valid circuit data...</p>
+          <p className="text-zinc-500 text-[10px] mb-1 font-mono">{err.message}</p>
+          <p className="text-zinc-400 text-[9px]">The circuit layout contains invalid SVG data. Describe your project again to reset.</p>
         </div>
       </div>
     );
