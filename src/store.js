@@ -55,10 +55,17 @@ void loop() {
     "parts": [],
     "connections": []
   },
-  setDiagram: (diagram) => set((state) => ({ 
-    diagram,
-    files: { ...state.files, 'diagram.json': JSON.stringify(diagram, null, 2) }
-  })),
+  setDiagram: (diagram) => set((state) => {
+    try {
+      return { 
+        diagram,
+        files: { ...state.files, 'diagram.json': JSON.stringify(diagram, null, 2) }
+      };
+    } catch (e) {
+      console.error("Diagram Sync Error:", e);
+      return state;
+    }
+  }),
 
   compileCode: async () => {
     set({ isCompiling: true, hasSimulated: false });

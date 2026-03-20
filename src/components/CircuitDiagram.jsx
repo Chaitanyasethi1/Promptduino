@@ -97,101 +97,115 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
 };
 
 export default function CircuitDiagram({ diagram }) {
-  if (!diagram || !diagram.parts) return null;
+  try {
+    if (!diagram || !diagram.parts || !Array.isArray(diagram.parts)) return null;
 
-  const partPins = {};
-  if (diagram.connections) {
-    diagram.connections.forEach(conn => {
-      if (!conn.from || !conn.to || !conn.from.includes(':') || !conn.to.includes(':')) return;
-      const [fP, fPin] = conn.from.split(':');
-      const [tP, tPin] = conn.to.split(':');
-      if (!fP || !fPin || !tP || !tPin) return;
+    const partPins = {};
+    if (Array.isArray(diagram.connections)) {
+      diagram.connections.forEach(conn => {
+        if (!conn?.from || !conn?.to || !conn.from.includes(':') || !conn.to.includes(':')) return;
+        const [fP, fPin] = conn.from.split(':');
+        const [tP, tPin] = conn.to.split(':');
+        if (!fP || !fPin || !tP || !tPin) return;
 
-      if (!partPins[fP]) partPins[fP] = new Set();
-      if (!partPins[tP]) partPins[tP] = new Set();
-      partPins[fP].add(fPin); partPins[tP].add(tPin);
+        if (!partPins[fP]) partPins[fP] = new Set();
+        if (!partPins[tP]) partPins[tP] = new Set();
+        partPins[fP].add(fPin); partPins[tP].add(tPin);
+      });
+    }
+
+    const completeParts = [...(diagram.parts || [])];
+    Object.keys(partPins).forEach(id => {
+      if (!completeParts.find(p => p.id === id)) completeParts.push({ id, type: id, name: id.toUpperCase() });
     });
+
+    let counts = { mcu: 0, out: 0, mid: 0 };
+    const partsWithPos = completeParts.map((p) => {
+      const t = p.type?.toLowerCase() || '';
+      const isMcu = t.includes('esp') || t.includes('uno') || t.includes('arduino');
+      
+      let x = 350, y = 60;
+      if (isMcu) { x = 330; y = 380; counts.mcu++; }
+      else if (t.includes('button')) { 
+        x = 100 + (counts.out % 2) * 500; 
+        y = 60 + Math.floor(counts.out / 2) * 110;
+        counts.out++; 
+      }
+      else { x = 60 + (counts.mid * 160); y = 240; counts.mid++; }
+
+      return { ...p, pins: Array.from(partPins[p.id] || []), x, y };
+    });
+
+    const getPinPos = (pId, pName) => {
+      const p = partsWithPos.find(part => part.id === pId);
+      if (!p) return { x: 0, y: 0 };
+      const t = p.type?.toLowerCase() || '';
+      const safePins = Array.isArray(p.pins) ? p.pins : [];
+      const idx = Math.max(0, safePins.indexOf(pName));
+
+      if (t.includes('led')) return { x: (p.x || 0) + (idx === 0 ? 15 : 25), y: (p.y || 0) + 30 };
+      if (t.includes('button')) {
+        const coords = [{x:0, y:12}, {x:0, y:38}, {x:50, y:12}, {x:50, y:38}];
+        const c = coords[idx % 4] || coords[0];
+        return { x: (p.x || 0) + c.x, y: (p.y || 0) + c.y };
+      }
+      if (t.includes('resistor')) return { x: (p.x || 0) + (idx === 0 ? 0 : 80), y: (p.y || 0) + 10 };
+      if (t.includes('esp32')) {
+        const half = Math.max(1, Math.ceil(safePins.length / 2));
+        return { x: (p.x || 0) + 25 + (idx % half) * 15, y: (p.y || 0) + (idx < half ? 5 : 145) };
+      }
+      return { x: (p.x || 0) + 40, y: (p.y || 0) + 60 };
+    };
+
+    const renderWire = (start, end) => {
+      const sx = start.x || 0; const sy = start.y || 0;
+      const ex = end.x || 0; const ey = end.y || 0;
+      const midY = Math.max(sy, ey) + 70;
+      return `M ${sx} ${sy} C ${sx} ${midY}, ${ex} ${midY}, ${ex} ${ey}`;
+    };
+
+    return (
+      <div className="w-full h-full bg-[#18181b] overflow-hidden rounded-lg border border-[#27272a] relative">
+        <svg className="w-full h-full" viewBox="0 0 850 600">
+          <defs>
+            <pattern id="dark-grid" width="30" height="30" patternUnits="userSpaceOnUse">
+               <circle cx="2" cy="2" r="1.2" fill="#3f3f46" opacity="0.4"/>
+            </pattern>
+            <filter id="shadow">
+              <feDropShadow dx="1" dy="2" stdDeviation="1.5" floodOpacity="0.4" />
+            </filter>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#dark-grid)" />
+
+          {Array.isArray(diagram.connections) && diagram.connections.map((conn, i) => {
+            if (!conn?.from?.includes(':')) return null;
+            const s = getPinPos(conn.from.split(':')[0], conn.from.split(':')[1]);
+            const e = getPinPos(conn.to.split(':')[0], conn.to.split(':')[1]);
+            const color = conn.color === 'auto' ? '#3b82f6' : (conn.color || '#3b82f6');
+            return (
+              <motion.path key={`w-${i}`} d={renderWire(s, e)} stroke={color} strokeWidth="2.8" fill="none" strokeLinecap="round"
+               initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1, delay: i * 0.05 }}
+               style={{ filter: "url(#shadow)" }} />
+            );
+          })}
+
+          {partsWithPos.map(p => (
+            <motion.g key={p.id} transform={`translate(${p.x || 0}, ${p.y || 0})`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <ComponentIcon type={p.type} name={p.name} id={p.id} pins={p.pins} />
+            </motion.g>
+          ))}
+        </svg>
+      </div>
+    );
+  } catch (err) {
+    console.error("Diagram Render Error:", err);
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center bg-[#18181b] p-6 text-center">
+        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl max-w-xs">
+          <p className="text-red-400 text-sm font-bold mb-2 uppercase tracking-widest font-mono">Sim Error</p>
+          <p className="text-zinc-400 text-xs">Waiting for valid circuit data...</p>
+        </div>
+      </div>
+    );
   }
-
-  const completeParts = [...(diagram.parts || [])];
-  Object.keys(partPins).forEach(id => {
-    if (!completeParts.find(p => p.id === id)) completeParts.push({ id, type: id, name: id.toUpperCase() });
-  });
-
-  let counts = { mcu: 0, out: 0, mid: 0 };
-  const partsWithPos = completeParts.map((p) => {
-    const t = p.type?.toLowerCase() || '';
-    const isMcu = t.includes('esp') || t.includes('uno');
-    
-    let x = 350, y = 60;
-    if (isMcu) { x = 330; y = 360; counts.mcu++; }
-    else if (t.includes('button')) { 
-      x = 100 + (counts.out % 2) * 500; 
-      y = 60 + Math.floor(counts.out / 2) * 110;
-      counts.out++; 
-    }
-    else { x = 80 + (counts.mid * 140); y = 240; counts.mid++; }
-
-    return { ...p, pins: Array.from(partPins[p.id] || []), x, y };
-  });
-
-  const getPinPos = (pId, pName) => {
-    const p = partsWithPos.find(part => part.id === pId);
-    if (!p) return { x: 0, y: 0 };
-    const t = p.type?.toLowerCase() || '';
-    const safePins = Array.isArray(p.pins) ? p.pins : [];
-    const idx = safePins.indexOf(pName);
-
-    if (t.includes('led')) return { x: p.x + (idx === 0 ? 15 : 25), y: p.y + 30 };
-    if (t.includes('button')) {
-      const coords = [{x:0, y:12}, {x:0, y:38}, {x:50, y:12}, {x:50, y:38}];
-      const c = coords[idx % 4] || coords[0];
-      return { x: p.x + c.x, y: p.y + c.y };
-    }
-    if (t.includes('resistor')) return { x: p.x + (idx === 0 ? 0 : 80), y: p.y + 10 };
-    if (t.includes('esp32')) {
-      const half = Math.ceil(safePins.length / 2);
-      return { x: p.x + 25 + (idx % half) * 15, y: p.y + (idx < half ? 5 : 145) };
-    }
-    return { x: p.x + 40, y: p.y + 60 };
-  };
-
-  const renderWire = (start, end) => {
-    const midY = Math.max(start.y, end.y) + 70;
-    return `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`;
-  };
-
-  return (
-    <div className="w-full h-full bg-[#18181b] overflow-hidden rounded-lg border border-[#27272a]">
-      <svg className="w-full h-full" viewBox="0 0 850 600">
-        <defs>
-          <pattern id="dark-grid" width="30" height="30" patternUnits="userSpaceOnUse">
-             <circle cx="2" cy="2" r="1.2" fill="#3f3f46" opacity="0.4"/>
-          </pattern>
-          <filter id="shadow">
-            <feDropShadow dx="1" dy="2" stdDeviation="1.5" floodOpacity="0.4" />
-          </filter>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#dark-grid)" />
-
-        {diagram.connections?.map((conn, i) => {
-          if (!conn.from || !conn.to || !conn.from.includes(':')) return null;
-          const s = getPinPos(conn.from.split(':')[0], conn.from.split(':')[1]);
-          const e = getPinPos(conn.to.split(':')[0], conn.to.split(':')[1]);
-          const color = conn.color === 'auto' ? '#3b82f6' : (conn.color || '#3b82f6');
-          return (
-            <motion.path key={i} d={renderWire(s, e)} stroke={color} strokeWidth="2.8" fill="none" strokeLinecap="round"
-             initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, delay: i * 0.1 }}
-             style={{ filter: "url(#shadow)" }} />
-          );
-        })}
-
-        {partsWithPos.map(p => (
-          <motion.g key={p.id} transform={`translate(${p.x}, ${p.y})`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <ComponentIcon type={p.type} name={p.name} id={p.id} pins={p.pins} />
-          </motion.g>
-        ))}
-      </svg>
-    </div>
-  );
 }
