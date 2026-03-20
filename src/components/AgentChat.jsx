@@ -57,18 +57,15 @@ export default function AgentChat() {
       
       const prompt = `${SYSTEM_PROMPT}\n\n[Current Editor Code]:\n\`\`\`cpp\n${currentCode}\n\`\`\`\n\nChat History:\n${chatHistory}\n\n**[user]**: ${userMessage}\n**[model]**:`;
 
-      if (!ai) {
+       if (!ai) {
         setMessages(prev => [...prev, { role: 'model', text: "Error: AI not initialized. Please ensure VITE_GEMINI_API_KEY is configured in Vercel Environment Variables or your local .env.local file." }]);
         setIsLoading(false);
         return;
       }
       
-      const response = await ai.models.generateContent({
-        model: MODEL_NAME,
-        contents: prompt,
-      });
-
-      const reply = response.text || "Sorry, I couldn't generate a response.";
+      const model = ai.getGenerativeModel({ model: MODEL_NAME });
+      const result = await model.generateContent(prompt);
+      const reply = result.response.text() || "Sorry, I couldn't generate a response.";
       setMessages(prev => [...prev, { role: 'model', text: reply }]);
       
       // 1. Extract the primary code block (usually CPP)
