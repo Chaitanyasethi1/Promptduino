@@ -31,11 +31,11 @@ function App() {
         </section>
 
         {/* Right Column: Simulation & Agent Chat */}
-        <aside className="w-[400px] shrink-0 flex flex-col bg-[#EFECE1]">
-          <div className="flex-1 border-b border-[#E0DCD1] min-h-0">
+        <aside className="w-[420px] shrink-0 flex flex-col bg-[#EFECE1] border-l border-[#E0DCD1]">
+          <div className="h-[45%] border-b border-[#E0DCD1] min-h-0 overflow-hidden">
             <SimulationPanel />
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-hidden">
             <AgentChat />
           </div>
         </aside>

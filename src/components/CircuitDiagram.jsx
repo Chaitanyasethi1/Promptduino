@@ -139,7 +139,7 @@ export default function CircuitDiagram({ diagram }) {
   };
 
   return (
-    <svg className="w-full h-full min-h-[450px]" viewBox="0 0 850 600">
+    <svg className="w-full h-full" viewBox="0 0 850 600">
       <defs>
         <pattern id="dot-grid" width="25" height="25" patternUnits="userSpaceOnUse">
           <circle cx="2" cy="2" r="1" fill="#cbd5e1" opacity="0.4"/>
