@@ -50,19 +50,37 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
     );
   }
 
-  // 4. Realistic Buzzer (Piezo)
-  if (t.includes('buzzer') || t.includes('piezo')) {
+  // 4. Realistic Arduino Uno
+  if (t.includes('uno') || t.includes('arduino')) {
     return (
       <g>
-        <circle cx="40" cy="40" r="40" fill="#18181b" stroke="#3f3f46" strokeWidth="3" />
-        <circle cx="40" cy="40" r="30" fill="none" stroke="#3f3f46" strokeWidth="1" />
-        <circle cx="40" cy="40" r="20" fill="none" stroke="#3f3f46" strokeWidth="1" />
-        <circle cx="40" cy="40" r="5" fill="#000" />
+        <rect width="200" height="150" rx="8" fill="#1e3a8a" stroke="#1e40af" strokeWidth="2" />
+        <rect x="10" y="20" width="40" height="30" rx="2" fill="#cbd5e1" /> {/* USB */}
+        <rect x="10" y="80" width="40" height="50" rx="2" fill="#18181b" /> {/* Jack */}
+        <rect x="70" y="5" width="120" height="12" rx="1" fill="#18181b" /> {/* Top Pin Header */}
+        <rect x="70" y="133" width="120" height="12" rx="1" fill="#18181b" /> {/* Bottom Pin Header */}
+        <text x="130" y="75" textAnchor="middle" fill="#fff" fontSize="10px" fontWeight="black" opacity="0.4">ARDUINO UNO</text>
+        {safePins.slice(0, 10).map((p, i) => <circle key={p} cx={75 + i * 11} cy="11" r="2" fill="#fbbf24" />)}
+        {safePins.slice(10, 20).map((p, i) => <circle key={p} cx={75 + i * 11} cy="139" r="2" fill="#fbbf24" />)}
       </g>
     );
   }
 
-  // 5. Realistic ESP32-C3 Top-Down
+  // 5. Realistic LCD 16x2
+  if (t.includes('lcd') || t.includes('display')) {
+    return (
+      <g>
+        <rect width="220" height="100" rx="4" fill="#166534" stroke="#14532d" strokeWidth="2" />
+        <rect x="10" y="10" width="200" height="80" rx="2" fill="#3f6212" /> {/* Screen edge */}
+        <rect x="15" y="15" width="190" height="70" rx="1" fill="#365314" /> {/* Screen center */}
+        {/* Header pins on top edge */}
+        <rect x="25" y="-5" width="160" height="10" fill="#18181b" />
+        {safePins.slice(0, 16).map((p, i) => <circle key={p} cx={30 + i * 10} cy="0" r="2" fill="#fbbf24" />)}
+      </g>
+    );
+  }
+
+  // 6. Realistic ESP32-C3
   if (t.includes('esp32') || t.includes('c3')) {
     return (
       <g>
@@ -71,11 +89,10 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
         <text x="90" y="55" textAnchor="middle" fill="#18181b" fontSize="6px" fontWeight="bold">ESP32-C3</text>
         <rect x="20" y="110" width="20" height="20" fill="#3f3f46" />
         <rect x="140" y="110" width="20" height="20" fill="#3f3f46" />
-        
-        {safePins.slice(0, Math.ceil(safePins.length/2)).map((p, i) => (
+        {safePins.slice(0, Math.max(1, Math.ceil(safePins.length/2))).map((p, i) => (
           <circle key={p} cx={25 + (i * 15)} cy="5" r="3" fill="#fbbf24" />
         ))}
-         {safePins.slice(Math.ceil(safePins.length/2)).map((p, i) => (
+         {safePins.slice(Math.max(1, Math.ceil(safePins.length/2))).map((p, i) => (
           <circle key={p} cx={25 + (i * 15)} cy="145" r="3" fill="#fbbf24" />
         ))}
       </g>
@@ -84,12 +101,12 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
 
   return (
     <g>
-      <rect width="80" height="120" rx="4" fill="#09090b" stroke="#3f3f46" strokeWidth="2" />
-      <text x="40" y="20" textAnchor="middle" fill="#71717a" fontSize="8px" fontWeight="bold">{(name || type || '').toUpperCase()}</text>
+      <rect width="100" height="80" rx="4" fill="#09090b" stroke="#3f3f46" strokeWidth="2" />
+      <text x="50" y="20" textAnchor="middle" fill="#71717a" fontSize="8px" fontWeight="bold">{(name || type || '').toUpperCase()}</text>
       {safePins.map((p, i) => {
-        const isLeft = i < safePins.length / 2;
-        const x = isLeft ? 0 : 80;
-        const y = 30 + (i % Math.ceil(safePins.length/2)) * 15;
+        const half = Math.max(1, Math.ceil(safePins.length / 2));
+        const x = i < half ? 0 : 100;
+        const y = 30 + (i % half) * 15;
         return <rect key={p} x={x-2} y={y} width="4" height="2" fill="#a1a1aa" />;
       })}
     </g>
@@ -107,7 +124,6 @@ export default function CircuitDiagram({ diagram }) {
         const [fP, fPin] = conn.from.split(':');
         const [tP, tPin] = conn.to.split(':');
         if (!fP || !fPin || !tP || !tPin) return;
-
         if (!partPins[fP]) partPins[fP] = new Set();
         if (!partPins[tP]) partPins[tP] = new Set();
         partPins[fP].add(fPin); partPins[tP].add(tPin);
@@ -123,15 +139,17 @@ export default function CircuitDiagram({ diagram }) {
     const partsWithPos = completeParts.map((p) => {
       const t = p.type?.toLowerCase() || '';
       const isMcu = t.includes('esp') || t.includes('uno') || t.includes('arduino');
+      const isLcd = t.includes('lcd') || t.includes('display');
       
       let x = 350, y = 60;
-      if (isMcu) { x = 330; y = 380; counts.mcu++; }
+      if (isMcu) { x = 300; y = 380; counts.mcu++; }
+      else if (isLcd) { x = 320; y = 100; counts.out++; }
       else if (t.includes('button')) { 
-        x = 100 + (counts.out % 2) * 500; 
+        x = 60 + (counts.out % 2) * 600; 
         y = 60 + Math.floor(counts.out / 2) * 110;
         counts.out++; 
       }
-      else { x = 60 + (counts.mid * 160); y = 240; counts.mid++; }
+      else { x = 60 + (counts.mid * 180); y = 240; counts.mid++; }
 
       return { ...p, pins: Array.from(partPins[p.id] || []), x, y };
     });
@@ -150,6 +168,13 @@ export default function CircuitDiagram({ diagram }) {
         return { x: (p.x || 0) + c.x, y: (p.y || 0) + c.y };
       }
       if (t.includes('resistor')) return { x: (p.x || 0) + (idx === 0 ? 0 : 80), y: (p.y || 0) + 10 };
+      if (t.includes('uno') || t.includes('arduino')) {
+        const half = Math.max(1, Math.ceil(safePins.length / 2));
+        return { x: (p.x || 0) + 75 + (idx % 10) * 11, y: (p.y || 0) + (idx < 10 ? 5 : 145) };
+      }
+      if (t.includes('lcd') || t.includes('display')) {
+        return { x: (p.x || 0) + 30 + (idx % 16) * 10, y: (p.y || 0) };
+      }
       if (t.includes('esp32')) {
         const half = Math.max(1, Math.ceil(safePins.length / 2));
         return { x: (p.x || 0) + 25 + (idx % half) * 15, y: (p.y || 0) + (idx < half ? 5 : 145) };
@@ -160,7 +185,7 @@ export default function CircuitDiagram({ diagram }) {
     const renderWire = (start, end) => {
       const sx = start.x || 0; const sy = start.y || 0;
       const ex = end.x || 0; const ey = end.y || 0;
-      const midY = Math.max(sy, ey) + 70;
+      const midY = Math.max(sy, ey) + 80;
       return `M ${sx} ${sy} C ${sx} ${midY}, ${ex} ${midY}, ${ex} ${ey}`;
     };
 
