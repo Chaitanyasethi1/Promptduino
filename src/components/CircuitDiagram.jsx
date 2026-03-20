@@ -9,43 +9,29 @@ const getPinColor = (pinName) => {
 
 const ComponentIcon = ({ type, color, name, pins }) => {
   const isMicrocontroller = type?.toLowerCase().includes('arduino') || type?.toLowerCase().includes('esp') || type?.toLowerCase().includes('nano');
-  
-  if (isMicrocontroller) {
-    return (
-      <g>
-        <rect width="140" height="100" rx="6" fill={type?.includes('esp') ? "#1f2937" : "#0f172a"} stroke={type?.includes('esp') ? "#374151" : "#1e293b"} strokeWidth="2.5" />
-        <rect x="-10" y="20" width="10" height="20" rx="2" fill="#d1d5db" />
-        <rect x="25" y="5" width="90" height="8" rx="1" fill="#000" />
-        <rect x="25" y="87" width="90" height="8" rx="1" fill="#000" />
-        <text x="70" y="55" textAnchor="middle" fill="#e2e8f0" fontSize="10px" fontWeight="bold" fontFamily="monospace">{type?.toUpperCase()}</text>
-        <circle cx="120" cy="50" r="15" fill="#334155" />
-        <circle cx="120" cy="50" r="12" fill="#1e293b" />
-      </g>
-    );
-  }
 
   // Draw universal components dynamically based on pins
   const pinCount = pins.length || 4;
-  const width = Math.max(60, pinCount * 15);
+  const width = Math.max(100, pinCount * 20); // Give them wider area so text doesn't mash
   const height = 45;
 
   return (
     <g>
       {/* High Quality Component Body */}
-      <rect width={width} height={height} rx="4" fill="#0ea5e9" stroke="#0284c7" strokeWidth="2" />
-      <rect x="2" y="2" width={width-4} height={height-4} rx="2" fill="#38bdf8" />
-      <text x={width/2} y={20} textAnchor="middle" fill="#fff" fontSize="8px" fontWeight="bold" fontFamily="monospace">
-        {(name || type).substring(0, 10).toUpperCase()}
+      <rect width={width} height={height} rx="4" fill={isMicrocontroller ? "#1e40af" : "#0ea5e9"} stroke={isMicrocontroller ? "#1e3a8a" : "#0284c7"} strokeWidth="2" />
+      <rect x="2" y="2" width={width-4} height={height-4} rx="2" fill={isMicrocontroller ? "#3b82f6" : "#38bdf8"} />
+      <text x={width/2} y={22} textAnchor="middle" fill="#fff" fontSize="9px" fontWeight="bold" fontFamily="monospace">
+        {(name || type).toUpperCase()}
       </text>
       
       {/* Dynamic Rendered Pins */}
       {pins.map((pin, i) => {
-        const pinX = 10 + (i * 15);
+        const pinX = 10 + (i * 20);
         return (
           <g key={pin}>
             <rect x={pinX} y={height} width="2" height="6" fill="#fbbf24" />
             <circle cx={pinX+1} cy={height+8} r="2" fill="#d97706" />
-            <text x={pinX+1} y={height-5} textAnchor="middle" fill="#0f172a" fontSize="5px" fontWeight="bold">{pin}</text>
+            <text x={pinX+1} y={height-5} textAnchor="middle" fill="#0f172a" fontSize="6px" fontWeight="bold">{pin}</text>
           </g>
         );
       })}
@@ -99,16 +85,16 @@ export default function CircuitDiagram({ diagram }) {
     let yDelta = 40;
     
     if (isMcu) {
-      xStrata = 50;
+      xStrata = 40;
       yDelta = 100 + (mcuCount * 160);
       mcuCount++;
     } else if (isOutput) {
-      xStrata = 480;
-      yDelta = 40 + (outputCount * 120);
+      xStrata = 520;
+      yDelta = 60 + (outputCount * 120);
       outputCount++;
     } else {
-      xStrata = 260; // Sensor/Middle
-      yDelta = 40 + (inputCount * 120);
+      xStrata = 280; // Sensor/Middle
+      yDelta = 60 + (inputCount * 120);
       inputCount++;
     }
     
@@ -124,31 +110,22 @@ export default function CircuitDiagram({ diagram }) {
     const part = partsWithPos.find(p => p.id === partId);
     if (!part) return { x: 0, y: 0 };
     
-    // MCU specific hardcoded pins (approximations for realistic boards)
-    if (part.type?.toLowerCase().includes('arduino') || part.type?.toLowerCase().includes('esp')) {
-      if (pinName.toLowerCase() === 'gnd') return { x: part.x + 115, y: part.y + 87, dir: 'down' };
-      if (pinName.toLowerCase() === '5v' || pinName.toLowerCase() === '3v3') return { x: part.x + 100, y: part.y + 87, dir: 'down' };
-      
-      // Attempt to map remaining pins across the upper row
-      const pseudoIndex = pinName.length * 5;
-      return { x: part.x + 30 + (pseudoIndex % 80), y: part.y + 5, dir: 'up' };
-    }
-
     // Dynamic Generic Pins (Bottom Edge)
     const pinIndex = part.pins.indexOf(pinName);
-    const pinX = part.x + 10 + (Math.max(pinIndex, 0) * 15) + 1;
+    const pinX = part.x + 10 + (Math.max(pinIndex, 0) * 20) + 1;
     const pinY = part.y + 45 + 8; // Adjust for the pin rendering offset
     
-    return { x: pinX, y: pinY, dir: 'down' };
+    return { x: pinX, y: pinY };
   };
 
   // 3. Create Orthogonal Manhattan routing for Wires
-  const renderWire = (start, end, color) => {
-    // Avoid completely overlapping lines by adding a tiny random offset
-    const offset = Math.floor(Math.random() * 10) - 5;
+  const renderWire = (start, end, idx) => {
+    // Determine the lowest starting point between the two
+    const sinkY = Math.max(start.y, end.y);
     
-    // Calculate a midway breaking point to make a nice schematic corner
-    const midY = start.y + (end.y - start.y) / 2 + offset;
+    // Lane distribution: give each wire a guaranteed distinct horizontal line to prevent overlapping bus lines
+    const laneOffset = 15 + (idx * 4);
+    const midY = sinkY + laneOffset;
     
     const d = `M ${start.x} ${start.y} 
                L ${start.x} ${midY} 
