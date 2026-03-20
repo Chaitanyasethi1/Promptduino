@@ -1,6 +1,10 @@
 import { ChevronDown, FileCode2, FolderTree } from 'lucide-react';
+import { useStore } from '../store';
 
 export default function FileExplorer() {
+  const activeFile = useStore(state => state.activeFile);
+  const setActiveFile = useStore(state => state.setActiveFile);
+
   return (
     <div className="flex flex-col h-full text-[13px] bg-[#EFECE1]">
       <div className="flex items-center px-5 py-3 text-xs font-semibold tracking-[0.05em] text-[#7A7870] uppercase">
@@ -18,12 +22,18 @@ export default function FileExplorer() {
           
           {/* Files */}
           <div className="ml-5 border-l border-[#E0DCD1] pl-2 mt-1 space-y-0.5">
-            <div className="flex items-center px-3 py-1.5 bg-[#E0DCD1] text-[#3A3A3A] cursor-pointer rounded-md font-medium">
-              <FileCode2 size={15} className="mr-2.5 text-[#6392A8]" />
+            <div 
+              onClick={() => setActiveFile('main.ino')}
+              className={`flex items-center px-3 py-1.5 cursor-pointer rounded-md font-medium transition-colors ${activeFile === 'main.ino' ? 'bg-[#E0DCD1] text-[#3A3A3A]' : 'text-[#7A7870] hover:bg-[#E0DCD1]/50'}`}
+            >
+              <FileCode2 size={15} className={`mr-2.5 ${activeFile === 'main.ino' ? 'text-[#6392A8]' : 'text-[#A3B0A3]'}`} />
               main.ino
             </div>
-            <div className="flex items-center px-3 py-1.5 hover:bg-[#E0DCD1]/50 cursor-pointer text-[#7A7870] rounded-md transition-colors">
-              <FileCode2 size={15} className="mr-2.5 text-[#D18F52]" />
+            <div 
+              onClick={() => setActiveFile('diagram.json')}
+              className={`flex items-center px-3 py-1.5 cursor-pointer rounded-md font-medium transition-colors ${activeFile === 'diagram.json' ? 'bg-[#E0DCD1] text-[#3A3A3A]' : 'text-[#7A7870] hover:bg-[#E0DCD1]/50'}`}
+            >
+              <FileCode2 size={15} className={`mr-2.5 ${activeFile === 'diagram.json' ? 'text-[#D18F52]' : 'text-[#A3B0A3]'}`} />
               diagram.json
             </div>
           </div>

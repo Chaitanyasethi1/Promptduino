@@ -19,8 +19,10 @@ const SYSTEM_PROMPT = `You are the PromptDuino AI Agent. Your job is to help the
 CRITICAL RULES:
 1. When generating code, you MUST wrap the complete, runnable Arduino sketch inside a standard markdown cpp code block (e.g. \`\`\`cpp ... \`\`\`).
 2. Additionally, ALWAYS provide a connection diagram in a JSON code block (e.g. \`\`\`json ... \`\`\`) describing the parts and their pins.
-3. The diagram JSON should follow this structure: { "parts": [{ "type": "arduino-uno", "id": "uno", "name": "Arduino Uno" }, { "type": "led", "id": "led1", "name": "Red LED" }], "connections": [{ "from": "uno:13", "to": "led1:anode" }, { "from": "uno:GND", "to": "led1:cathode" }] }.
-4. The UI will extract these blocks and update the editor and the simulation diagram.`;
+3. Supported parts: 'arduino-uno', 'led', 'ultrasonic' (HC-SR04), 'buzzer', 'servo'.
+4. For 'arduino-uno', use pins: D0-D13, A0-A5, 5V, GND.
+5. The diagram JSON should follow this structure: { "parts": [{ "type": "arduino-uno", "id": "uno", "name": "Arduino Uno" }, { "type": "led", "id": "led1", "name": "Red LED", "color": "red" }], "connections": [{ "from": "uno:13", "to": "led1:anode" }, { "from": "uno:GND", "to": "led1:cathode" }] }.
+6. The UI will extract these blocks and update the editor and the simulation diagram.`;
 
 export default function AgentChat() {
   const [messages, setMessages] = useState([
@@ -69,22 +71,27 @@ export default function AgentChat() {
       const reply = response.text || "Sorry, I couldn't generate a response.";
       setMessages(prev => [...prev, { role: 'model', text: reply }]);
       
-      // Automatically extract markdown code block and inject into the CodeEditor
+      // Extract CPP code block (the main logic)
       const codeMatch = reply.match(/```(?:cpp|c|arduino)?\n([\s\S]*?)```/);
       if (codeMatch && codeMatch[1]) {
         setCode(codeMatch[1].trim());
       }
       
-      // Automatically extract diagram.json block
-      const jsonMatch = reply.match(/```(?:json)?\n([\s\S]*?)```/);
-      if (jsonMatch && jsonMatch[1]) {
+      // Extract Diagram JSON block (specifically looking for JSON or any block following the first one)
+      // We look for a block that contains "parts" or "connections" which are characteristic of our diagram format
+      const allBlocks = [...reply.matchAll(/```(?:json)?\n([\s\S]*?)```/g)];
+      for (const block of allBlocks) {
+        const content = block[1].trim();
         try {
-          const data = JSON.parse(jsonMatch[1].trim());
-          if (data.parts || data.connections) {
-            setDiagram(data);
+          if (content.includes('"parts"') || content.includes('"connections"')) {
+            const data = JSON.parse(content);
+            if (data.parts || data.connections) {
+              setDiagram(data);
+              break; // Found it
+            }
           }
         } catch (e) {
-          console.error("Failed to parse diagram JSON", e);
+          // Skip invalid JSON
         }
       }
       

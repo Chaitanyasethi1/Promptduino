@@ -11,7 +11,38 @@ void loop() {
   // put your main code here, to run repeatedly:
   delay(1000);
 }`,
-  setCode: (code) => set({ code, hasSimulated: false }),
+  setCode: (code) => set((state) => ({ 
+    code, 
+    hasSimulated: false,
+    files: { ...state.files, 'main.ino': code }
+  })),
+  activeFile: 'main.ino',
+  setActiveFile: (activeFile) => set({ activeFile }),
+  files: {
+    'main.ino': `void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  Serial.println("Hello, PromptDuino!");
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  delay(1000);
+}`,
+    'diagram.json': '{\n  "parts": [],\n  "connections": []\n}'
+  },
+  updateFile: (fileName, content) => set((state) => {
+    const newState = { files: { ...state.files, [fileName]: content } };
+    if (fileName === 'main.ino') newState.code = content;
+    if (fileName === 'diagram.json') {
+      try {
+        newState.diagram = JSON.parse(content);
+      } catch (e) {
+        // Keep existing diagram if JSON is invalid
+      }
+    }
+    return newState;
+  }),
   serialLogs: [],
   addSerialLog: (log) => set((state) => ({ serialLogs: [...state.serialLogs, log] })),
   clearSerialLogs: () => set({ serialLogs: [] }),
@@ -21,7 +52,10 @@ void loop() {
   hasSimulated: false,
   setHasSimulated: (hasSimulated) => set({ hasSimulated }),
   diagram: null,
-  setDiagram: (diagram) => set({ diagram }),
+  setDiagram: (diagram) => set((state) => ({ 
+    diagram,
+    files: { ...state.files, 'diagram.json': JSON.stringify(diagram, null, 2) }
+  })),
 
   compileCode: async () => {
     set({ isCompiling: true, hasSimulated: false });
