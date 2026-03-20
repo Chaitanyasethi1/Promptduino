@@ -205,10 +205,9 @@ export default function CircuitDiagram({ diagram }) {
       {partsWithPos.map((part) => (
         <motion.g
           key={part.id}
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+          initial={{ x: part.x, y: part.y - 20, opacity: 0 }}
+          animate={{ x: part.x, y: part.y, opacity: 1 }}
           transition={{ type: 'spring', damping: 12, stiffness: 100 }}
-          transform={`translate(${part.x}, ${part.y})`}
         >
           <ComponentIcon type={part.type} color={part.color} name={part.name} pins={part.pins} />
         </motion.g>
