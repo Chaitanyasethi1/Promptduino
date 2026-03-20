@@ -1,5 +1,6 @@
-const ComponentIcon = ({ type, name, pins }) => {
+const ComponentIcon = ({ type, name, pins = [] }) => {
   const t = type?.toLowerCase() || '';
+  const safePins = Array.isArray(pins) ? pins : [];
   
   // 1. Realistic LED
   if (t.includes('led')) {
@@ -7,14 +8,14 @@ const ComponentIcon = ({ type, name, pins }) => {
     return (
       <g>
         <defs>
-          <radialGradient id={`grad-led-${color}`} cx="30%" cy="30%" r="70%">
+          <radialGradient id={`grad-led-${id ? id : i}-${color}`} cx="30%" cy="30%" r="70%">
             <stop offset="0%" stopColor="#fff" stopOpacity="0.8" />
             <stop offset="100%" stopColor={color} />
           </radialGradient>
         </defs>
-        <rect x="14" y="30" width="2" height="30" fill="#a1a1aa" /> {/* Cathode */}
-        <rect x="24" y="30" width="2" height="40" fill="#a1a1aa" /> {/* Anode */}
-        <path d="M 10 30 L 30 30 L 30 15 A 10 10 0 0 0 10 15 Z" fill={`url(#grad-led-${color})`} />
+        <rect x="14" y="30" width="2" height="30" fill="#a1a1aa" />
+        <rect x="24" y="30" width="2" height="40" fill="#a1a1aa" />
+        <path d="M 10 30 L 30 30 L 30 15 A 10 10 0 0 0 10 15 Z" fill={`url(#grad-led-${id ? id : i}-${color})`} />
       </g>
     );
   }
@@ -41,10 +42,10 @@ const ComponentIcon = ({ type, name, pins }) => {
       <g>
         <rect x="0" y="8" width="80" height="4" fill="#a1a1aa" />
         <rect x="20" y="0" width="40" height="20" rx="10" fill="#d4d4d8" />
-        <rect x="28" y="0" width="4" height="20" fill="#92400e" /> {/* Brown */}
-        <rect x="36" y="0" width="4" height="20" fill="#000" />    {/* Black */}
-        <rect x="44" y="0" width="4" height="20" fill="#ef4444" /> {/* Red */}
-        <rect x="52" y="0" width="2" height="20" fill="#fbbf24" /> {/* Gold */}
+        <rect x="28" y="0" width="4" height="20" fill="#92400e" />
+        <rect x="36" y="0" width="4" height="20" fill="#000" />
+        <rect x="44" y="0" width="4" height="20" fill="#ef4444" />
+        <rect x="52" y="0" width="2" height="20" fill="#fbbf24" />
       </g>
     );
   }
@@ -68,30 +69,27 @@ const ComponentIcon = ({ type, name, pins }) => {
         <rect width="180" height="150" rx="6" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
         <rect x="60" y="20" width="60" height="50" rx="4" fill="#a1a1aa" />
         <text x="90" y="55" textAnchor="middle" fill="#18181b" fontSize="6px" fontWeight="bold">ESP32-C3</text>
-        <rect x="20" y="110" width="20" height="20" fill="#3f3f46" /> {/* Boot */}
-        <rect x="140" y="110" width="20" height="20" fill="#3f3f46" /> {/* Reset */}
+        <rect x="20" y="110" width="20" height="20" fill="#3f3f46" />
+        <rect x="140" y="110" width="20" height="20" fill="#3f3f46" />
         
-        {/* Top Pins */}
-        {pins.slice(0, Math.ceil(pins.length/2)).map((p, i) => (
+        {safePins.slice(0, Math.ceil(safePins.length/2)).map((p, i) => (
           <circle key={p} cx={25 + (i * 15)} cy="5" r="3" fill="#fbbf24" />
         ))}
-         {/* Bottom Pins */}
-         {pins.slice(Math.ceil(pins.length/2)).map((p, i) => (
+         {safePins.slice(Math.ceil(safePins.length/2)).map((p, i) => (
           <circle key={p} cx={25 + (i * 15)} cy="145" r="3" fill="#fbbf24" />
         ))}
       </g>
     );
   }
 
-  // Fallback for others (like 7Seg or Chips)
   return (
     <g>
       <rect width="80" height="120" rx="4" fill="#09090b" stroke="#3f3f46" strokeWidth="2" />
-      <text x="40" y="20" textAnchor="middle" fill="#71717a" fontSize="8px" fontWeight="bold">{(name || type).toUpperCase()}</text>
-      {pins.map((p, i) => {
-        const isLeft = i < pins.length / 2;
+      <text x="40" y="20" textAnchor="middle" fill="#71717a" fontSize="8px" fontWeight="bold">{(name || type || '').toUpperCase()}</text>
+      {safePins.map((p, i) => {
+        const isLeft = i < safePins.length / 2;
         const x = isLeft ? 0 : 80;
-        const y = 30 + (i % Math.ceil(pins.length/2)) * 15;
+        const y = 30 + (i % Math.ceil(safePins.length/2)) * 15;
         return <rect key={p} x={x-2} y={y} width="4" height="2" fill="#a1a1aa" />;
       })}
     </g>
@@ -104,9 +102,11 @@ export default function CircuitDiagram({ diagram }) {
   const partPins = {};
   if (diagram.connections) {
     diagram.connections.forEach(conn => {
-      if (!conn.from || !conn.to) return;
+      if (!conn.from || !conn.to || !conn.from.includes(':') || !conn.to.includes(':')) return;
       const [fP, fPin] = conn.from.split(':');
       const [tP, tPin] = conn.to.split(':');
+      if (!fP || !fPin || !tP || !tPin) return;
+
       if (!partPins[fP]) partPins[fP] = new Set();
       if (!partPins[tP]) partPins[tP] = new Set();
       partPins[fP].add(fPin); partPins[tP].add(tPin);
@@ -122,16 +122,15 @@ export default function CircuitDiagram({ diagram }) {
   const partsWithPos = completeParts.map((p) => {
     const t = p.type?.toLowerCase() || '';
     const isMcu = t.includes('esp') || t.includes('uno');
-    const isBig = t.includes('buzzer') || t.includes('7seg');
     
     let x = 350, y = 60;
-    if (isMcu) { x = 320; y = 350; counts.mcu++; }
+    if (isMcu) { x = 330; y = 360; counts.mcu++; }
     else if (t.includes('button')) { 
-      x = 100 + (counts.out % 2) * 450; 
-      y = 80 + Math.floor(counts.out / 2) * 120;
+      x = 100 + (counts.out % 2) * 500; 
+      y = 60 + Math.floor(counts.out / 2) * 110;
       counts.out++; 
     }
-    else { x = 120 + (counts.mid * 100); y = 250; counts.mid++; }
+    else { x = 80 + (counts.mid * 140); y = 240; counts.mid++; }
 
     return { ...p, pins: Array.from(partPins[p.id] || []), x, y };
   });
@@ -140,25 +139,25 @@ export default function CircuitDiagram({ diagram }) {
     const p = partsWithPos.find(part => part.id === pId);
     if (!p) return { x: 0, y: 0 };
     const t = p.type?.toLowerCase() || '';
-    const idx = p.pins.indexOf(pName);
+    const safePins = Array.isArray(p.pins) ? p.pins : [];
+    const idx = safePins.indexOf(pName);
 
-    if (t.includes('led')) return { x: p.x + (idx === 0 ? 15 : 25), y: p.y + (idx === 0 ? 30 : 30) };
+    if (t.includes('led')) return { x: p.x + (idx === 0 ? 15 : 25), y: p.y + 30 };
     if (t.includes('button')) {
       const coords = [{x:0, y:12}, {x:0, y:38}, {x:50, y:12}, {x:50, y:38}];
-      const c = coords[idx % 4];
+      const c = coords[idx % 4] || coords[0];
       return { x: p.x + c.x, y: p.y + c.y };
     }
     if (t.includes('resistor')) return { x: p.x + (idx === 0 ? 0 : 80), y: p.y + 10 };
     if (t.includes('esp32')) {
-      const half = Math.ceil(p.pins.length / 2);
+      const half = Math.ceil(safePins.length / 2);
       return { x: p.x + 25 + (idx % half) * 15, y: p.y + (idx < half ? 5 : 145) };
     }
     return { x: p.x + 40, y: p.y + 60 };
   };
 
   const renderWire = (start, end) => {
-    const midX = (start.x + end.x) / 2;
-    const midY = Math.max(start.y, end.y) + 80;
+    const midY = Math.max(start.y, end.y) + 70;
     return `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`;
   };
 
@@ -167,21 +166,22 @@ export default function CircuitDiagram({ diagram }) {
       <svg className="w-full h-full" viewBox="0 0 850 600">
         <defs>
           <pattern id="dark-grid" width="30" height="30" patternUnits="userSpaceOnUse">
-             <circle cx="2" cy="2" r="1.2" fill="#3f3f46" opacity="0.3"/>
+             <circle cx="2" cy="2" r="1.2" fill="#3f3f46" opacity="0.4"/>
           </pattern>
           <filter id="shadow">
-            <feDropShadow dx="1" dy="2" stdDeviation="2" floodOpacity="0.5" />
+            <feDropShadow dx="1" dy="2" stdDeviation="1.5" floodOpacity="0.4" />
           </filter>
         </defs>
         <rect width="100%" height="100%" fill="url(#dark-grid)" />
 
         {diagram.connections?.map((conn, i) => {
+          if (!conn.from || !conn.to || !conn.from.includes(':')) return null;
           const s = getPinPos(conn.from.split(':')[0], conn.from.split(':')[1]);
           const e = getPinPos(conn.to.split(':')[0], conn.to.split(':')[1]);
           const color = conn.color === 'auto' ? '#3b82f6' : (conn.color || '#3b82f6');
           return (
-            <motion.path key={i} d={renderWire(s, e)} stroke={color} strokeWidth="3" fill="none" strokeLinecap="round"
-             initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5 }}
+            <motion.path key={i} d={renderWire(s, e)} stroke={color} strokeWidth="2.8" fill="none" strokeLinecap="round"
+             initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, delay: i * 0.1 }}
              style={{ filter: "url(#shadow)" }} />
           );
         })}
