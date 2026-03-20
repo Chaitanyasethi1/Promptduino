@@ -12,8 +12,8 @@ try {
   console.error("Gemini API missing or failed to initialize", e);
 }
 
-// Using gemini-1.5-flash which has a higher quota and is very reliable
-const MODEL_NAME = 'gemini-1.5-flash';
+// Using gemini-1.5-flash-latest which has a higher quota and is very reliable
+const MODEL_NAME = 'gemini-1.5-flash-latest';
 
 const SYSTEM_PROMPT = `You are the PromptDuino AI Agent. Your job is to help the user write, debug, and understand Arduino C++ code for any microcontroller (Arduino Uno, ESP32, ESP8266, etc.) and any census/actuator.
 CRITICAL RULES:
