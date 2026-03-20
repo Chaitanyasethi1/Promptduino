@@ -52,7 +52,7 @@ void loop() {
   hasSimulated: false,
   setHasSimulated: (hasSimulated) => set({ hasSimulated }),
   diagram: {
-    "parts": [{ "type": "arduino-uno", "id": "uno", "name": "Arduino Uno" }],
+    "parts": [],
     "connections": []
   },
   setDiagram: (diagram) => set((state) => ({ 
