@@ -1,16 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, User, Send, Sparkles, Loader2 } from 'lucide-react';
+import { Bot, User, Send, Sparkles, Loader2, Key } from 'lucide-react';
 import Groq from 'groq-sdk';
 import { useStore } from '../store';
-
-let groq = null;
-try {
-  if (import.meta.env.VITE_GROQ_API_KEY) {
-    groq = new Groq({ apiKey: import.meta.env.VITE_GROQ_API_KEY, dangerouslyAllowBrowser: true });
-  }
-} catch (e) {
-  console.error("Groq API missing or failed to initialize", e);
-}
 
 // Using Groq's fast Llama 3 model
 const MODEL_NAME = 'llama-3.3-70b-versatile';
@@ -25,15 +16,26 @@ CRITICAL RULES:
 6. The UI will extract these blocks and update the editor and the simulation diagram automatically. Do not mention limitations; focus on fulfilling the user request.`;
 
 export default function AgentChat() {
-  const [messages, setMessages] = useState([
+  const defaultMessages = [
     { role: 'model', text: "Hello! I am the PromptDuino agent. Describe what you'd like your Arduino to do, and I'll generate the code." }
-  ]);
+  ];
+
+  
+  // API Key Management
+  const initialApiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem('GROQ_API_KEY') || '';
+  if (!initialApiKey) {
+    defaultMessages.push({ role: 'model', text: "🔑 Please paste your Groq API Key below to continue (it starts with 'gsk_'). Once saved, it will be kept securely in your browser." });
+  }
+
+  const [messages, setMessages] = useState(defaultMessages);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
+  const [apiKey, setApiKey] = useState(initialApiKey);
+  const [isKeyValid, setIsKeyValid] = useState(!!initialApiKey);
   
-  const setCode = useStore(state => state.setCode);
-  const setDiagram = useStore(state => state.setDiagram);
+  const messagesEndRef = useRef(null);
+  const setCode = useStore((state) => state.setCode);
+  const setDiagram = useStore((state) => state.setDiagram);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -43,8 +45,25 @@ export default function AgentChat() {
     scrollToBottom();
   }, [messages, isLoading]);
 
+  const saveApiKey = () => {
+    if (input.trim().startsWith('gsk_')) {
+      localStorage.setItem('GROQ_API_KEY', input.trim());
+      setApiKey(input.trim());
+      setIsKeyValid(true);
+      setInput('');
+      setMessages(prev => [...prev, { role: 'model', text: "API Key saved successfully! I am now connected to the Groq network. How can I help you build your circuit?" }]);
+    } else {
+      setMessages(prev => [...prev, { role: 'model', text: "Error: That doesn't look like a valid Groq API Key (it should start with 'gsk_'). Please try again." }]);
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim()) return;
+
+    if (!isKeyValid) {
+      saveApiKey();
+      return;
+    }
     
     const userMessage = input.trim();
     setInput('');
@@ -53,13 +72,9 @@ export default function AgentChat() {
 
     try {
       const currentCode = useStore.getState().code;
-      const chatHistoryText = messages.map(msg => `[${msg.role === 'model' ? 'assistant' : 'user'}]: ${msg.text}`).join('\n');
+      const chatHistoryText = messages.filter(msg => msg.text.indexOf('API Key') === -1).map(msg => `[${msg.role === 'model' ? 'assistant' : 'user'}]: ${msg.text}`).join('\n');
       
-      if (!groq) {
-        setMessages(prev => [...prev, { role: 'model', text: "Error: AI not initialized. Please ensure VITE_GROQ_API_KEY is configured." }]);
-        setIsLoading(false);
-        return;
-      }
+      const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
       
       const completion = await groq.chat.completions.create({
         messages: [
@@ -200,7 +215,7 @@ export default function AgentChat() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             className="w-full bg-transparent text-[13.5px] text-[#3A3A3A] outline-none py-3 pl-4 pr-11 placeholder-[#A3B0A3]"
-            placeholder="Type your prompt for Arduino..."
+            placeholder={isKeyValid ? "Type your prompt for Arduino..." : "Paste your Groq API Key (gsk_...) here..."}
             disabled={isLoading}
           />
           <button 
