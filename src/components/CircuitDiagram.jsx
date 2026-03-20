@@ -1,29 +1,25 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-const ComponentIcon = ({ type, color = "#6392A8" }) => {
-  switch (type) {
-    case 'arduino-uno':
-      return (
-        <g>
-          {/* Main PCB */}
-          <rect width="140" height="100" rx="6" fill="#1E477A" stroke="#2D608F" strokeWidth="2.5" />
-          {/* USB Port */}
-          <rect x="-10" y="15" width="30" height="25" rx="2" fill="#71717A" />
-          {/* DC Jack */}
-          <rect x="-10" y="65" width="25" height="20" rx="2" fill="#27272A" />
-          {/* ATmega Chip */}
-          <rect x="50" y="35" width="60" height="15" rx="1" fill="#18181B" />
-          {/* Digital Pins Header */}
-          <rect x="25" y="5" width="100" height="10" rx="1" fill="#000" />
-          <text x="75" y="13" textAnchor="middle" fill="#FFF" fontSize="6px" fontWeight="bold">DIGITAL (PWM~)</text>
-          {/* Analog Pins Header */}
-          <rect x="25" y="85" width="60" height="10" rx="1" fill="#000" />
-          <text x="55" y="93" textAnchor="middle" fill="#FFF" fontSize="6px" fontWeight="bold">ANALOG IN</text>
-          {/* Power Pins Header */}
-          <rect x="90" y="85" width="35" height="10" rx="1" fill="#000" />
-        </g>
-      );
+const ComponentIcon = ({ type, color = "#6392A8", name }) => {
+  const isMicrocontroller = type?.toLowerCase().includes('arduino') || type?.toLowerCase().includes('esp') || type?.toLowerCase().includes('nano');
+  
+  if (isMicrocontroller) {
+    return (
+      <g>
+        <rect width="140" height="100" rx="6" fill={type?.includes('esp') ? "#333" : "#1E477A"} stroke="#2D608F" strokeWidth="2.5" />
+        <rect x="-10" y="15" width="30" height="25" rx="2" fill="#71717A" />
+        <rect x="-10" y="65" width="25" height="20" rx="2" fill="#27272A" />
+        <rect x="50" y="35" width="60" height="15" rx="1" fill="#18181B" />
+        <rect x="25" y="5" width="100" height="10" rx="1" fill="#000" />
+        <text x="75" y="13" textAnchor="middle" fill="#FFF" fontSize="6px" fontWeight="bold">IO PINS</text>
+        <rect x="25" y="85" width="100" height="10" rx="1" fill="#000" />
+        <text x="75" y="93" textAnchor="middle" fill="#FFF" fontSize="6px" fontWeight="bold">{type?.toUpperCase()}</text>
+      </g>
+    );
+  }
+
+  switch (type?.toLowerCase()) {
     case 'led':
       return (
         <g>
@@ -34,12 +30,13 @@ const ComponentIcon = ({ type, color = "#6392A8" }) => {
         </g>
       );
     case 'ultrasonic':
+    case 'hc-sr04':
       return (
         <g>
            <rect width="60" height="30" rx="2" fill="#2563EB" />
            <circle cx="15" cy="15" r="10" fill="#E5E7EB" stroke="#1E40AF" />
            <circle cx="45" cy="15" r="10" fill="#E5E7EB" stroke="#1E40AF" />
-           <text x="30" y="27" textAnchor="middle" fill="#FFF" fontSize="5px">HC-SR04</text>
+           <text x="30" y="27" textAnchor="middle" fill="#FFF" fontSize="5px">S-SONIC</text>
         </g>
       );
     case 'buzzer':
@@ -60,8 +57,10 @@ const ComponentIcon = ({ type, color = "#6392A8" }) => {
     default:
       return (
         <g>
-          <rect width="40" height="30" rx="2" fill="#FDE047" stroke="#EAB308" strokeWidth="1.5" />
-          <text x="20" y="20" textAnchor="middle" fill="#854D0E" fontSize="8px" fontWeight="bold">{type?.substring(0,4)}</text>
+          <rect width="60" height="45" rx="4" fill="#EFECE1" stroke="#A3B0A3" strokeWidth="2" strokeDasharray="2 1" />
+          <circle cx="30" cy="20" r="10" fill="#6392A8" fillOpacity="0.1" />
+          <rect x="10" y="38" width="40" height="2" fill="#E0DCD1" />
+          <text x="30" y="24" textAnchor="middle" fill="#7A7870" fontSize="7px" fontWeight="bold">{type?.substring(0,6).toUpperCase()}</text>
         </g>
       );
   }
