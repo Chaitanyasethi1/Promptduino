@@ -16,6 +16,7 @@
     "@react-three/fiber": "^9.5.0",
     "@react-three/postprocessing": "^3.0.4",
     "@tailwindcss/vite": "^4.2.2",
+    "@wokwi/elements": "^1.9.2",
     "autoprefixer": "^10.4.27",
     "axios": "^1.13.6",
     "framer-motion": "^12.38.0",
