@@ -22,8 +22,10 @@ export default function AgentChat() {
   ];
 
   
-  // API Key Management
-  const initialApiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem('GROQ_API_KEY') || '';
+  // API Key Management - Providing a permanent global key
+  const GLOBAL_KEY = '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';
+  const initialApiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem('GROQ_API_KEY') || GLOBAL_KEY;
+  
   if (!initialApiKey) {
     defaultMessages.push({ role: 'model', text: "🔑 Please paste your Groq API Key below to continue (it starts with 'gsk_'). Once saved, it will be kept securely in your browser." });
   }
