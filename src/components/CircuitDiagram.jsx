@@ -45,24 +45,24 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
   if (t.includes('uno') || t.includes('arduino')) {
     return (
       <g>
-        <rect width="200" height="150" rx="8" fill="#1e3a8a" stroke="#1e40af" strokeWidth="2" />
-        <rect x="10" y="20" width="40" height="30" rx="2" fill="#cbd5e1" />
-        <rect x="10" y="80" width="40" height="50" rx="2" fill="#18181b" />
-        <rect x="70" y="5" width="120" height="12" rx="1" fill="#18181b" />
-        <rect x="70" y="133" width="120" height="12" rx="1" fill="#18181b" />
+        <rect width="210" height="150" rx="8" fill="#1e3a8a" stroke="#1e40af" strokeWidth="2" />
+        <rect x="10" y="20" width="45" height="35" rx="2" fill="#cbd5e1" />
+        <rect x="10" y="85" width="40" height="45" rx="2" fill="#18181b" />
+        <rect x="70" y="5" width="130" height="15" fill="#18181b" />
+        <rect x="70" y="130" width="130" height="15" fill="#18181b" />
         {safePins.slice(0, 10).map((p, i) => (
           <g key={`p1-${i}`}>
-            <circle cx={75 + i * 11} cy="11" r="2" fill="#fbbf24" />
-            <text x={75 + i * 11} y={22} textAnchor="middle" fill="#fff" fontSize="5px" opacity="0.8">{p}</text>
+            <circle cx={78 + i * 12} cy="12" r="2.5" fill="#fbbf24" stroke="#fff" strokeWidth="0.5" />
+            <text x={78 + i * 12} y={23} textAnchor="middle" fill="#fff" fontSize="6px" fontWeight="bold" opacity="0.9">{p}</text>
           </g>
         ))}
         {safePins.slice(10, 25).map((p, i) => (
           <g key={`p2-${i}`}>
-            <circle cx={75 + i * 11} cy="139" r="2" fill="#fbbf24" />
-            <text x={75 + i * 11} y={133} textAnchor="middle" fill="#fff" fontSize="5px" opacity="0.8">{p}</text>
+            <circle cx={78 + i * 12} cy="138" r="2.5" fill="#fbbf24" stroke="#fff" strokeWidth="0.5" />
+            <text x={78 + i * 12} y={130} textAnchor="middle" fill="#fff" fontSize="6px" fontWeight="bold" opacity="0.9">{p}</text>
           </g>
         ))}
-        <text x="130" y="75" textAnchor="middle" fill="#fff" fontSize="10px" fontWeight="black" opacity="0.2">ARDUINO UNO</text>
+        <text x="135" y="75" textAnchor="middle" fill="#fff" fontSize="11px" fontWeight="black" opacity="0.2">ARDUINO UNO</text>
       </g>
     );
   }
@@ -71,14 +71,14 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
   if (t.includes('lcd') || t.includes('display')) {
     return (
       <g>
-        <rect width="220" height="100" rx="4" fill="#166534" stroke="#14532d" strokeWidth="2" />
-        <rect x="10" y="10" width="200" height="70" rx="2" fill="#3f6212" />
-        <rect x="15" y="15" width="190" height="60" rx="1" fill="#365314" />
-        <rect x="25" y="85" width="160" height="10" fill="#18181b" />
+        <rect width="230" height="110" rx="4" fill="#166534" stroke="#14532d" strokeWidth="2" />
+        <rect x="10" y="10" width="210" height="80" rx="2" fill="#3f6212" />
+        <rect x="15" y="15" width="200" height="70" rx="1" fill="#365314" />
+        <rect x="25" y="95" width="180" height="12" fill="#18181b" />
         {safePins.map((p, i) => (
           <g key={`lp-${i}`}>
-            <circle cx={30 + i * 10} cy="90" r="2.5" fill="#fbbf24" stroke="#fff" strokeWidth="0.5" />
-            <text x={30 + i * 10} y={80} textAnchor="middle" fill="#fff" fontSize="5px" fontWeight="bold">{p}</text>
+            <circle cx={35 + i * 11} cy="101" r="2.5" fill="#fbbf24" stroke="#fff" strokeWidth="0.5" />
+            <text x={35 + i * 11} y={92} textAnchor="middle" fill="#fff" fontSize="6px" fontWeight="bold">{p}</text>
           </g>
         ))}
       </g>
@@ -127,27 +127,37 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
     );
   }
 
-  // 8. ESP32-C3 / Generic MCU
-  if (t.includes('esp') || t.includes('c3')) {
+  // 5. Realistic ESP32 DevKit (Left/Right Headers)
+  if (t.includes('esp') || t.includes('c3') || t.includes('devkit')) {
     const half = Math.max(1, Math.ceil(safePins.length/2));
-    const width = Math.max(160, half * 20);
+    const height = Math.max(200, half * 16 + 40);
     return (
       <g>
-        <rect width={width} height={120} rx="6" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
-        <rect x={(width-40)/2} y={20} width="40" height="30" rx="4" fill="#a1a1aa" />
-        <text x={width/2} y={65} textAnchor="middle" fill="#71717a" fontSize="8px" fontWeight="bold">ESP32 MODULE</text>
-        {safePins.slice(0, half).map((p, i) => (
-          <g key={`et-${i}`}>
-            <circle cx={20 + (i * 18)} cy="5" r="3" fill="#fbbf24" stroke="#fff" strokeWidth="0.5" />
-            <text x={20 + (i * 18)} y={15} textAnchor="start" transform={`rotate(90, ${20 + i*18}, 15)`} fill="#a1a1aa" fontSize="7px" fontWeight="bold">{p}</text>
-          </g>
-        ))}
-         {safePins.slice(half).map((p, i) => (
-          <g key={`eb-${i}`}>
-            <circle cx={20 + (i * 18)} cy="115" r="3" fill="#fbbf24" stroke="#fff" strokeWidth="0.5" />
-            <text x={20 + (i * 18)} y={105} textAnchor="end" transform={`rotate(90, ${20 + i*18}, 105)`} fill="#a1a1aa" fontSize="7px" fontWeight="bold">{p}</text>
-          </g>
-        ))}
+        <rect width="110" height={height} rx="8" fill="#18181b" stroke="#374151" strokeWidth="2" />
+        <rect x="25" y="25" width="60" height="55" rx="4" fill="#1f2937" stroke="#4b5563" />
+        <rect x="30" y="30" width="50" height="40" rx="2" fill="#374151" />
+        <text x="55" y="55" textAnchor="middle" fill="#9ca3af" fontSize="8px" fontWeight="bold">ESP32</text>
+        <rect x="25" y="10" width="60" height="10" fill="#111827" />
+        <rect x="30" y={height-30} width="15" height="15" rx="3" fill="#374151" />
+        <rect x="65" y={height-30} width="15" height="15" rx="3" fill="#374151" />
+        {safePins.slice(0, half).map((p, i) => {
+          const py = 30 + i * 16;
+          return (
+            <g key={`el-${i}`}>
+               <circle cx="6" cy={py} r="3" fill="#fbbf24" stroke="#fff" strokeWidth="0.5" />
+               <text x="14" y={py+2} fill="#9ca3af" fontSize="7px" fontWeight="bold">{p}</text>
+            </g>
+          );
+        })}
+        {safePins.slice(half).map((p, i) => {
+          const py = 30 + i * 16;
+          return (
+            <g key={`er-${i}`}>
+               <circle cx="104" cy={py} r="3" fill="#fbbf24" stroke="#fff" strokeWidth="0.5" />
+               <text x="96" y={py+2} textAnchor="end" fill="#9ca3af" fontSize="7px" fontWeight="bold">{p}</text>
+            </g>
+          );
+        })}
       </g>
     );
   }
@@ -239,15 +249,17 @@ export default function CircuitDiagram({ diagram }) {
         return { x: px + c.x, y: py + c.y };
       }
       if (t.includes('uno') || t.includes('arduino')) {
-        return { x: px + 75 + (idx % 10) * 11, y: py + (idx < 10 ? 11 : 139) };
+        return { x: px + 78 + (idx % 10) * 12, y: py + (idx < 10 ? 12 : 138) };
       }
-      if (t.includes('lcd')) return { x: px + 30 + (idx % 16) * 10, y: py + 90 };
+      if (t.includes('lcd')) return { x: px + 35 + (idx % 16) * 11, y: py + 101 };
       if (t.includes('servo')) return { x: px + 90, y: py + 12 + (idx * 6) };
       if (t.includes('ultra')) return { x: px + 35 + (idx * 10), y: py + 55 };
       if (t.includes('dht')) return { x: px + 15 + (idx * 10), y: py + 85 };
       if (t.includes('esp')) {
         const half = Math.max(1, Math.ceil(safePins.length / 2));
-        return { x: px + 20 + (idx % half) * 18, y: py + (idx < half ? 5 : 115) };
+        const sideIdx = idx % half;
+        const isLeft = idx < half;
+        return { x: px + (isLeft ? 6 : 104), y: py + 30 + (sideIdx * 16) };
       }
       // Generic Module Fallback Pin
       return { x: px + 15 + (idx * 18), y: py + 100 };
