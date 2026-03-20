@@ -273,23 +273,27 @@ export default function CircuitDiagram({ diagram }) {
           </defs>
           <rect width="100%" height="100%" fill="url(#dark-grid)" />
 
-          {Array.isArray(diagram.connections) && diagram.connections.map((conn, i) => {
-            if (!conn?.from?.includes(':')) return null;
-            const s = getPinPos(conn.from.split(':')[0], conn.from.split(':')[1]);
-            const e = getPinPos(conn.to.split(':')[0], conn.to.split(':')[1]);
-            const color = conn.color === 'auto' ? '#3b82f6' : (conn.color || '#3b82f6');
-            return (
-              <motion.path key={`w-${i}`} d={renderWire(s, e)} stroke={color} strokeWidth="2.8" fill="none" strokeLinecap="round"
-               initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2 }}
-               style={{ filter: "url(#shadow)" }} />
-            );
-          })}
-
           {partsWithPos.map((p, i) => (
             <motion.g key={`comp-${p.id}-${i}`} transform={`translate(${p.x || 0}, ${p.y || 0})`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <ComponentIcon type={p.type} name={p.name} id={p.id} pins={p.pins} />
             </motion.g>
           ))}
+
+          {Array.isArray(diagram.connections) && diagram.connections.map((conn, i) => {
+            if (!conn?.from?.includes(':') || !conn?.to?.includes(':')) return null;
+            const s = getPinPos(conn.from.split(':')[0], conn.from.split(':')[1]);
+            const e = getPinPos(conn.to.split(':')[0], conn.to.split(':')[1]);
+            const color = conn.color === 'auto' ? '#3b82f6' : (conn.color || '#3b82f6');
+            return (
+              <React.Fragment key={`w-frag-${i}`}>
+                <motion.path d={renderWire(s, e)} stroke={color} strokeWidth="3.2" fill="none" strokeLinecap="round" opacity="0.9"
+                 initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1 }}
+                 style={{ filter: "url(#shadow)" }} />
+                <circle cx={s.x} cy={s.y} r="3" fill={color} stroke="#fff" strokeWidth="0.5" />
+                <circle cx={e.x} cy={e.y} r="3" fill={color} stroke="#fff" strokeWidth="0.5" />
+              </React.Fragment>
+            );
+          })}
         </svg>
       </div>
     );
