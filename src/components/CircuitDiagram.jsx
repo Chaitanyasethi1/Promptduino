@@ -60,25 +60,57 @@ export default function CircuitDiagram({ diagram }) {
   const partPins = {};
   if (diagram.connections) {
     diagram.connections.forEach(conn => {
+      if (!conn.from || !conn.to) return;
       const [fromPart, fromPin] = conn.from.split(':');
       const [toPart, toPin] = conn.to.split(':');
-      if (!partPins[fromPart]) partPins[fromPart] = new Set();
-      if (!partPins[toPart]) partPins[toPart] = new Set();
-      partPins[fromPart].add(fromPin);
-      partPins[toPart].add(toPin);
+      
+      if (fromPart && fromPin) {
+        if (!partPins[fromPart]) partPins[fromPart] = new Set();
+        partPins[fromPart].add(fromPin);
+      }
+      if (toPart && toPin) {
+        if (!partPins[toPart]) partPins[toPart] = new Set();
+        partPins[toPart].add(toPin);
+      }
     });
   }
 
-  // 2. Compute Smart Auto-Layout
-  const partsWithPos = diagram.parts.map((part, index) => {
-    const isMcu = part.type?.toLowerCase().includes('arduino') || part.type?.toLowerCase().includes('esp');
-    const isOutput = part.type?.includes('led') || part.type?.includes('buzzer');
+  // 2. Synthesize missing parts and compute Smart Auto-Layout
+  const completeParts = [...(diagram.parts || [])];
+  
+  // Synthesize any parts found in connections but missing from the parts array
+  Object.keys(partPins).forEach(partId => {
+    if (!completeParts.find(p => p.id === partId)) {
+      completeParts.push({ id: partId, type: partId, name: partId.toUpperCase() });
+    }
+  });
+
+  let mcuCount = 0;
+  let inputCount = 0;
+  let outputCount = 0;
+
+  const partsWithPos = completeParts.map((part) => {
+    const typeStr = part.type?.toLowerCase() || '';
+    const idStr = part.id?.toLowerCase() || '';
+    const isMcu = typeStr.includes('arduino') || typeStr.includes('esp') || idStr.includes('esp') || idStr.includes('uno');
+    const isOutput = typeStr.includes('led') || typeStr.includes('buzzer') || typeStr.includes('lcd') || typeStr.includes('display');
     
-    // Assign MCU to far left, inputs to middle, outputs to right
-    let xStrata = isMcu ? 50 : (isOutput ? 450 : 250);
-    let yDelta = 40 + (index * 110);
+    let xStrata = 250;
+    let yDelta = 40;
     
-    if (isMcu) yDelta = 100;
+    if (isMcu) {
+      xStrata = 50;
+      yDelta = 100 + (mcuCount * 160);
+      mcuCount++;
+    } else if (isOutput) {
+      xStrata = 480;
+      yDelta = 40 + (outputCount * 120);
+      outputCount++;
+    } else {
+      xStrata = 260; // Sensor/Middle
+      yDelta = 40 + (inputCount * 120);
+      inputCount++;
+    }
     
     return {
       ...part,
