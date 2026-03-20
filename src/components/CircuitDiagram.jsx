@@ -1,4 +1,4 @@
-const ComponentIcon = ({ type, name, pins = [] }) => {
+const ComponentIcon = ({ type, name, id, pins = [] }) => {
   const t = type?.toLowerCase() || '';
   const safePins = Array.isArray(pins) ? pins : [];
   
@@ -8,14 +8,14 @@ const ComponentIcon = ({ type, name, pins = [] }) => {
     return (
       <g>
         <defs>
-          <radialGradient id={`grad-led-${id ? id : i}-${color}`} cx="30%" cy="30%" r="70%">
+          <radialGradient id={`grad-led-${id}-${color}`} cx="30%" cy="30%" r="70%">
             <stop offset="0%" stopColor="#fff" stopOpacity="0.8" />
             <stop offset="100%" stopColor={color} />
           </radialGradient>
         </defs>
         <rect x="14" y="30" width="2" height="30" fill="#a1a1aa" />
         <rect x="24" y="30" width="2" height="40" fill="#a1a1aa" />
-        <path d="M 10 30 L 30 30 L 30 15 A 10 10 0 0 0 10 15 Z" fill={`url(#grad-led-${id ? id : i}-${color})`} />
+        <path d="M 10 30 L 30 30 L 30 15 A 10 10 0 0 0 10 15 Z" fill={`url(#grad-led-${id}-${color})`} />
       </g>
     );
   }
@@ -188,7 +188,7 @@ export default function CircuitDiagram({ diagram }) {
 
         {partsWithPos.map(p => (
           <motion.g key={p.id} transform={`translate(${p.x}, ${p.y})`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <ComponentIcon type={p.type} name={p.name} pins={p.pins} />
+            <ComponentIcon type={p.type} name={p.name} id={p.id} pins={p.pins} />
           </motion.g>
         ))}
       </svg>
