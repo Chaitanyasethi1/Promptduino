@@ -1,19 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bot, User, Send, Sparkles, Loader2 } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
+import Groq from 'groq-sdk';
 import { useStore } from '../store';
 
-let ai = null;
+let groq = null;
 try {
-  if (import.meta.env.VITE_GEMINI_API_KEY) {
-    ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  if (import.meta.env.VITE_GROQ_API_KEY) {
+    groq = new Groq({ apiKey: import.meta.env.VITE_GROQ_API_KEY, dangerouslyAllowBrowser: true });
   }
 } catch (e) {
-  console.error("Gemini API missing or failed to initialize", e);
+  console.error("Groq API missing or failed to initialize", e);
 }
 
-// Using gemini-2.5-flash which is the default for @google/genai
-const MODEL_NAME = 'gemini-2.5-flash';
+// Using Groq's fast Llama 3 model
+const MODEL_NAME = 'llama-3.3-70b-versatile';
 
 const SYSTEM_PROMPT = `You are the PromptDuino AI Agent. Your job is to help the user write, debug, and understand Arduino C++ code for any microcontroller (Arduino Uno, ESP32, ESP8266, etc.) and any census/actuator.
 CRITICAL RULES:
@@ -44,7 +44,7 @@ export default function AgentChat() {
   }, [messages, isLoading]);
 
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim()) return;
     
     const userMessage = input.trim();
     setInput('');
@@ -53,22 +53,24 @@ export default function AgentChat() {
 
     try {
       const currentCode = useStore.getState().code;
-      const chatHistory = messages.map(msg => `**[${msg.role}]**: ${msg.text}`).join('\n');
+      const chatHistoryText = messages.map(msg => `[${msg.role === 'model' ? 'assistant' : 'user'}]: ${msg.text}`).join('\n');
       
-      const prompt = `${SYSTEM_PROMPT}\n\n[Current Editor Code]:\n\`\`\`cpp\n${currentCode}\n\`\`\`\n\nChat History:\n${chatHistory}\n\n**[user]**: ${userMessage}\n**[model]**:`;
-
-       if (!ai) {
-        setMessages(prev => [...prev, { role: 'model', text: "Error: AI not initialized. Please ensure VITE_GEMINI_API_KEY is configured in Vercel Environment Variables or your local .env.local file." }]);
+      if (!groq) {
+        setMessages(prev => [...prev, { role: 'model', text: "Error: AI not initialized. Please ensure VITE_GROQ_API_KEY is configured." }]);
         setIsLoading(false);
         return;
       }
       
-      const response = await ai.models.generateContent({
+      const completion = await groq.chat.completions.create({
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: `[Current Editor Code]:\n\`\`\`cpp\n${currentCode}\n\`\`\`\n\nChat History:\n${chatHistoryText}\n\nUser Request: ${userMessage}` }
+        ],
         model: MODEL_NAME,
-        contents: prompt,
+        temperature: 0.2, // Low temp for reliable formatting
       });
 
-      const reply = response.text || "Sorry, I couldn't generate a response.";
+      const reply = completion.choices[0]?.message?.content || "Sorry, I couldn't generate a response.";
       setMessages(prev => [...prev, { role: 'model', text: reply }]);
       
       // 1. Extract the primary code block (usually CPP)
