@@ -1,6 +1,7 @@
 const ComponentIcon = ({ type, name, id, pins = [] }) => {
   const t = type?.toLowerCase() || '';
-  const safePins = Array.isArray(pins) ? pins : [];
+  const safePins = (Array.isArray(pins) ? pins : []).filter(p => typeof p === 'string' && p.length > 0);
+  const safeId = String(id || 'unknown').replace(/\s+/g, '_');
   
   // 1. Realistic LED
   if (t.includes('led')) {
@@ -8,14 +9,14 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
     return (
       <g>
         <defs>
-          <radialGradient id={`grad-led-${id}-${color}`} cx="30%" cy="30%" r="70%">
+          <radialGradient id={`grad-led-${safeId}-${color}`} cx="30%" cy="30%" r="70%">
             <stop offset="0%" stopColor="#fff" stopOpacity="0.8" />
             <stop offset="100%" stopColor={color} />
           </radialGradient>
         </defs>
         <rect x="14" y="30" width="2" height="30" fill="#a1a1aa" />
         <rect x="24" y="30" width="2" height="40" fill="#a1a1aa" />
-        <path d="M 10 30 L 30 30 L 30 15 A 10 10 0 0 0 10 15 Z" fill={`url(#grad-led-${id}-${color})`} />
+        <path d="M 10 30 L 30 30 L 30 15 A 10 10 0 0 0 10 15 Z" fill={`url(#grad-led-${safeId}-${color})`} />
       </g>
     );
   }
@@ -55,13 +56,13 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
     return (
       <g>
         <rect width="200" height="150" rx="8" fill="#1e3a8a" stroke="#1e40af" strokeWidth="2" />
-        <rect x="10" y="20" width="40" height="30" rx="2" fill="#cbd5e1" /> {/* USB */}
-        <rect x="10" y="80" width="40" height="50" rx="2" fill="#18181b" /> {/* Jack */}
-        <rect x="70" y="5" width="120" height="12" rx="1" fill="#18181b" /> {/* Top Pin Header */}
-        <rect x="70" y="133" width="120" height="12" rx="1" fill="#18181b" /> {/* Bottom Pin Header */}
+        <rect x="10" y="20" width="40" height="30" rx="2" fill="#cbd5e1" />
+        <rect x="10" y="80" width="40" height="50" rx="2" fill="#18181b" />
+        <rect x="70" y="5" width="120" height="12" rx="1" fill="#18181b" />
+        <rect x="70" y="133" width="120" height="12" rx="1" fill="#18181b" />
         <text x="130" y="75" textAnchor="middle" fill="#fff" fontSize="10px" fontWeight="black" opacity="0.4">ARDUINO UNO</text>
-        {safePins.slice(0, 10).map((p, i) => <circle key={p} cx={75 + i * 11} cy="11" r="2" fill="#fbbf24" />)}
-        {safePins.slice(10, 20).map((p, i) => <circle key={p} cx={75 + i * 11} cy="139" r="2" fill="#fbbf24" />)}
+        {safePins.slice(0, 10).map((p, i) => <circle key={`p1-${i}`} cx={75 + i * 11} cy="11" r="2" fill="#fbbf24" />)}
+        {safePins.slice(10, 20).map((p, i) => <circle key={`p2-${i}`} cx={75 + i * 11} cy="139" r="2" fill="#fbbf24" />)}
       </g>
     );
   }
@@ -71,17 +72,17 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
     return (
       <g>
         <rect width="220" height="100" rx="4" fill="#166534" stroke="#14532d" strokeWidth="2" />
-        <rect x="10" y="10" width="200" height="80" rx="2" fill="#3f6212" /> {/* Screen edge */}
-        <rect x="15" y="15" width="190" height="70" rx="1" fill="#365314" /> {/* Screen center */}
-        {/* Header pins on top edge */}
+        <rect x="10" y="10" width="200" height="80" rx="2" fill="#3f6212" />
+        <rect x="15" y="15" width="190" height="70" rx="1" fill="#365314" />
         <rect x="25" y="-5" width="160" height="10" fill="#18181b" />
-        {safePins.slice(0, 16).map((p, i) => <circle key={p} cx={30 + i * 10} cy="0" r="2" fill="#fbbf24" />)}
+        {safePins.slice(0, 16).map((p, i) => <circle key={`lp-${i}`} cx={30 + i * 10} cy="0" r="2" fill="#fbbf24" />)}
       </g>
     );
   }
 
   // 6. Realistic ESP32-C3
   if (t.includes('esp32') || t.includes('c3')) {
+    const half = Math.max(1, Math.ceil(safePins.length/2));
     return (
       <g>
         <rect width="180" height="150" rx="6" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
@@ -89,11 +90,11 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
         <text x="90" y="55" textAnchor="middle" fill="#18181b" fontSize="6px" fontWeight="bold">ESP32-C3</text>
         <rect x="20" y="110" width="20" height="20" fill="#3f3f46" />
         <rect x="140" y="110" width="20" height="20" fill="#3f3f46" />
-        {safePins.slice(0, Math.max(1, Math.ceil(safePins.length/2))).map((p, i) => (
-          <circle key={p} cx={25 + (i * 15)} cy="5" r="3" fill="#fbbf24" />
+        {safePins.slice(0, half).map((p, i) => (
+          <circle key={`et-${i}`} cx={25 + (i * 15)} cy="5" r="3" fill="#fbbf24" />
         ))}
-         {safePins.slice(Math.max(1, Math.ceil(safePins.length/2))).map((p, i) => (
-          <circle key={p} cx={25 + (i * 15)} cy="145" r="3" fill="#fbbf24" />
+         {safePins.slice(half).map((p, i) => (
+          <circle key={`eb-${i}`} cx={25 + (i * 15)} cy="145" r="3" fill="#fbbf24" />
         ))}
       </g>
     );
@@ -107,7 +108,7 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
         const half = Math.max(1, Math.ceil(safePins.length / 2));
         const x = i < half ? 0 : 100;
         const y = 30 + (i % half) * 15;
-        return <rect key={p} x={x-2} y={y} width="4" height="2" fill="#a1a1aa" />;
+        return <rect key={`f-${i}`} x={x-2} y={y} width="4" height="2" fill="#a1a1aa" />;
       })}
     </g>
   );
@@ -120,10 +121,11 @@ export default function CircuitDiagram({ diagram }) {
     const partPins = {};
     if (Array.isArray(diagram.connections)) {
       diagram.connections.forEach(conn => {
-        if (!conn?.from || !conn?.to || !conn.from.includes(':') || !conn.to.includes(':')) return;
+        if (!conn?.from?.includes(':') || !conn?.to?.includes(':')) return;
         const [fP, fPin] = conn.from.split(':');
         const [tP, tPin] = conn.to.split(':');
         if (!fP || !fPin || !tP || !tPin) return;
+
         if (!partPins[fP]) partPins[fP] = new Set();
         if (!partPins[tP]) partPins[tP] = new Set();
         partPins[fP].add(fPin); partPins[tP].add(tPin);

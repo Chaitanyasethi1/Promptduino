@@ -6,13 +6,15 @@ import { useStore } from '../store';
 // Using Groq's fast Llama 3 model
 const MODEL_NAME = 'llama-3.3-70b-versatile';
 
-const SYSTEM_PROMPT = `You are the PromptDuino AI Agent. Your job is to help the user write, debug, and understand Arduino C++ code for any microcontroller and any census/actuator.
+const SYSTEM_PROMPT = `You are the PromptDuino AI Agent. Your job is to help the user write, debug, and understand Arduino C++ code for any microcontroller and any sensor/actuator.
 CRITICAL RULES:
 1. When generating code, you MUST wrap the complete, runnable Arduino sketch inside a standard markdown cpp code block (e.g. \`\`\`cpp ... \`\`\`).
 2. Additionally, ALWAYS provide a connection diagram in a JSON code block (e.g. \`\`\`json ... \`\`\`) describing the parts and their pins.
 3. The diagram JSON format: { "parts": [{ "type": "component-type", "id": "id1", "name": "Display Name" }], "connections": [{ "from": "id1:pin1", "to": "id2:pin2", "color": "wire-color" }] }.
-4. You MUST use the EXACT microcontroller requested (like ESP32). Use realistic pin names: 'GPIOx' for ESP32, 'Dx' or 'Ax' for Arduino Uno.
-5. The UI will extract these blocks and update the editor and the simulation diagram automatically. Do not mention limitations; focus on fulfilling the user request.`;
+4. You MUST use the EXACT microcontroller requested. Use realistic pin names: 'GPIOx' for ESP32, 'Dx' or 'Ax' for Arduino Uno. 
+5. Components like LCDs should have pins like 'RS', 'E', 'D4', 'D5', 'D6', 'D7'.
+6. IDs must be simple alphanumeric strings (e.g. 'uno', 'lcd1', 'led_red'). Do not use spaces in IDs.
+7. The UI will extract these blocks and update the editor and the simulation diagram automatically. Focus on fulfilling the user request accurately.`;
 
 export default function AgentChat() {
   const defaultMessages = [
