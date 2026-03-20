@@ -37,21 +37,7 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
     );
   }
 
-  // 3. Realistic Resistor
-  if (t.includes('resistor')) {
-    return (
-      <g>
-        <rect x="0" y="8" width="80" height="4" fill="#a1a1aa" />
-        <rect x="20" y="0" width="40" height="20" rx="10" fill="#d4d4d8" />
-        <rect x="28" y="0" width="4" height="20" fill="#92400e" />
-        <rect x="36" y="0" width="4" height="20" fill="#000" />
-        <rect x="44" y="0" width="4" height="20" fill="#ef4444" />
-        <rect x="52" y="0" width="2" height="20" fill="#fbbf24" />
-      </g>
-    );
-  }
-
-  // 4. Realistic Arduino Uno
+  // 3. Realistic Arduino Uno
   if (t.includes('uno') || t.includes('arduino')) {
     return (
       <g>
@@ -62,12 +48,12 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
         <rect x="70" y="133" width="120" height="12" rx="1" fill="#18181b" />
         <text x="130" y="75" textAnchor="middle" fill="#fff" fontSize="10px" fontWeight="black" opacity="0.4">ARDUINO UNO</text>
         {safePins.slice(0, 10).map((p, i) => <circle key={`p1-${i}`} cx={75 + i * 11} cy="11" r="2" fill="#fbbf24" />)}
-        {safePins.slice(10, 20).map((p, i) => <circle key={`p2-${i}`} cx={75 + i * 11} cy="139" r="2" fill="#fbbf24" />)}
+        {safePins.slice(10, 25).map((p, i) => <circle key={`p2-${i}`} cx={75 + i * 11} cy="139" r="2" fill="#fbbf24" />)}
       </g>
     );
   }
 
-  // 5. Realistic LCD 16x2
+  // 4. Realistic LCD 16x2
   if (t.includes('lcd') || t.includes('display')) {
     return (
       <g>
@@ -80,35 +66,65 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
     );
   }
 
-  // 6. Realistic ESP32-C3
-  if (t.includes('esp32') || t.includes('c3')) {
-    const half = Math.max(1, Math.ceil(safePins.length/2));
+  // 5. Realistic Servo Motor
+  if (t.includes('servo')) {
     return (
       <g>
-        <rect width="180" height="150" rx="6" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
-        <rect x="60" y="20" width="60" height="50" rx="4" fill="#a1a1aa" />
-        <text x="90" y="55" textAnchor="middle" fill="#18181b" fontSize="6px" fontWeight="bold">ESP32-C3</text>
-        <rect x="20" y="110" width="20" height="20" fill="#3f3f46" />
-        <rect x="140" y="110" width="20" height="20" fill="#3f3f46" />
-        {safePins.slice(0, half).map((p, i) => (
-          <circle key={`et-${i}`} cx={25 + (i * 15)} cy="5" r="3" fill="#fbbf24" />
-        ))}
-         {safePins.slice(half).map((p, i) => (
-          <circle key={`eb-${i}`} cx={25 + (i * 15)} cy="145" r="3" fill="#fbbf24" />
-        ))}
+        <rect width="80" height="40" rx="4" fill="#1e3a8a" stroke="#1e40af" strokeWidth="2" />
+        <circle cx="20" cy="20" r="15" fill="#f8fafc" stroke="#94a3b8" />
+        <rect x="5" y="17" width="30" height="6" rx="3" fill="#f1f5f9" transform="rotate(25 20 20)" />
+        <circle cx="20" cy="20" r="4" fill="#475569" />
+        <rect x="75" y="10" width="15" height="20" fill="#334155" />
+        {safePins.map((p, i) => <rect key={`s-${i}`} x={85} y={12 + i*6} width="8" height="3" fill="#fbbf24" />)}
       </g>
     );
   }
 
+  // 6. Ultrasonic Sensor (HC-SR04)
+  if (t.includes('ultra') || t.includes('hcsr04')) {
+    return (
+      <g>
+        <rect width="100" height="50" rx="4" fill="#1e40af" stroke="#1e3a8a" strokeWidth="2" />
+        <circle cx="25" cy="25" r="18" fill="#a1a1aa" stroke="#71717a" strokeWidth="2" />
+        <circle cx="25" cy="25" r="14" fill="#18181b" />
+        <circle cx="75" cy="25" r="18" fill="#a1a1aa" stroke="#71717a" strokeWidth="2" />
+        <circle cx="75" cy="25" r="14" fill="#18181b" />
+        {/* Pins at the bottom */}
+        {safePins.map((p, i) => <circle key={`u-${i}`} cx={35 + i*10} cy="55" r="2" fill="#fbbf24" />)}
+      </g>
+    );
+  }
+
+  // 7. DHT Sensor
+  if (t.includes('dht') || t.includes('temp')) {
+    return (
+      <g>
+        <rect width="60" height="80" rx="4" fill="#1d4ed8" stroke="#1e40af" strokeWidth="2" />
+        <rect x="10" y="10" width="40" height="50" fill="#3b82f6" />
+        {[...Array(5)].map((_, i) => <line key={i} x1="10" y1={15 + i*10} x2="50" y2={15 + i*10} stroke="#1e3a8a" strokeWidth="1" />)}
+        {[...Array(4)].map((_, i) => <line key={i} x1={20 + i*10} y1="10" x2={20 + i*10} y2="60" stroke="#1e3a8a" strokeWidth="1" />)}
+        {safePins.map((p, i) => <rect key={`d-${i}`} x={15 + i*10} y={75} width="3" height="15" fill="#fbbf24" />)}
+      </g>
+    );
+  }
+
+  // Fallback: Professional Dark Module
+  const pinCount = Math.max(1, safePins.length);
+  const width = Math.max(80, pinCount * 18);
   return (
     <g>
-      <rect width="100" height="80" rx="4" fill="#09090b" stroke="#3f3f46" strokeWidth="2" />
-      <text x="50" y="20" textAnchor="middle" fill="#71717a" fontSize="8px" fontWeight="bold">{(name || type || '').toUpperCase()}</text>
+      <rect width={width} height={80} rx="4" fill="#09090b" stroke="#3f3f46" strokeWidth="2" />
+      <rect x="2" y="2" width={width-4} height={20} rx="2" fill="#18181b" />
+      <text x={width/2} y={15} textAnchor="middle" fill="#71717a" fontSize="8px" fontWeight="bold" fontFamily="monospace">{(name || type || '').toUpperCase()}</text>
       {safePins.map((p, i) => {
-        const half = Math.max(1, Math.ceil(safePins.length / 2));
-        const x = i < half ? 0 : 100;
-        const y = 30 + (i % half) * 15;
-        return <rect key={`f-${i}`} x={x-2} y={y} width="4" height="2" fill="#a1a1aa" />;
+        const px = 10 + i * 14;
+        return (
+          <g key={`f-${i}`}>
+            <rect x={px-1} y={80} width="2" height="10" fill="#fbbf24" />
+            <circle cx={px} cy={90} r="2.5" fill="#f59e0b" stroke="#fff" strokeWidth="0.5" />
+            <text x={px} y={75} textAnchor="middle" fill="#a1a1aa" fontSize="6px">{p}</text>
+          </g>
+        );
       })}
     </g>
   );
@@ -125,7 +141,6 @@ export default function CircuitDiagram({ diagram }) {
         const [fP, fPin] = conn.from.split(':');
         const [tP, tPin] = conn.to.split(':');
         if (!fP || !fPin || !tP || !tPin) return;
-
         if (!partPins[fP]) partPins[fP] = new Set();
         if (!partPins[tP]) partPins[tP] = new Set();
         partPins[fP].add(fPin); partPins[tP].add(tPin);
@@ -141,17 +156,16 @@ export default function CircuitDiagram({ diagram }) {
     const partsWithPos = completeParts.map((p) => {
       const t = p.type?.toLowerCase() || '';
       const isMcu = t.includes('esp') || t.includes('uno') || t.includes('arduino');
-      const isLcd = t.includes('lcd') || t.includes('display');
+      const isOutput = t.includes('lcd') || t.includes('led') || t.includes('servo') || t.includes('buzzer');
       
       let x = 350, y = 60;
-      if (isMcu) { x = 300; y = 380; counts.mcu++; }
-      else if (isLcd) { x = 320; y = 100; counts.out++; }
-      else if (t.includes('button')) { 
-        x = 60 + (counts.out % 2) * 600; 
-        y = 60 + Math.floor(counts.out / 2) * 110;
+      if (isMcu) { x = 300; y = 380 + (counts.mcu * 160); counts.mcu++; }
+      else if (isOutput) { 
+        x = 60 + (counts.out % 2) * 550; 
+        y = 60 + Math.floor(counts.out / 2) * 140;
         counts.out++; 
       }
-      else { x = 60 + (counts.mid * 180); y = 240; counts.mid++; }
+      else { x = 60 + (counts.mid * 200); y = 240; counts.mid++; }
 
       return { ...p, pins: Array.from(partPins[p.id] || []), x, y };
     });
@@ -169,19 +183,19 @@ export default function CircuitDiagram({ diagram }) {
         const c = coords[idx % 4] || coords[0];
         return { x: (p.x || 0) + c.x, y: (p.y || 0) + c.y };
       }
-      if (t.includes('resistor')) return { x: (p.x || 0) + (idx === 0 ? 0 : 80), y: (p.y || 0) + 10 };
       if (t.includes('uno') || t.includes('arduino')) {
-        const half = Math.max(1, Math.ceil(safePins.length / 2));
-        return { x: (p.x || 0) + 75 + (idx % 10) * 11, y: (p.y || 0) + (idx < 10 ? 5 : 145) };
+        return { x: (p.x || 0) + 75 + (idx % 10) * 11, y: (p.y || 0) + (idx < 10 ? 11 : 139) };
       }
-      if (t.includes('lcd') || t.includes('display')) {
-        return { x: (p.x || 0) + 30 + (idx % 16) * 10, y: (p.y || 0) };
-      }
+      if (t.includes('lcd')) return { x: (p.x || 0) + 30 + (idx % 16) * 10, y: (p.y || 0) };
+      if (t.includes('servo')) return { x: (p.x || 0) + 90, y: (p.y || 0) + 12 + (idx * 6) };
+      if (t.includes('ultra')) return { x: (p.x || 0) + 35 + (idx * 10), y: (p.y || 0) + 55 };
+      if (t.includes('dht')) return { x: (p.x || 0) + 15 + (idx * 10), y: (p.y || 0) + 85 };
       if (t.includes('esp32')) {
         const half = Math.max(1, Math.ceil(safePins.length / 2));
         return { x: (p.x || 0) + 25 + (idx % half) * 15, y: (p.y || 0) + (idx < half ? 5 : 145) };
       }
-      return { x: (p.x || 0) + 40, y: (p.y || 0) + 60 };
+      // Generic Module Fallback Pin
+      return { x: (p.x || 0) + 10 + (idx * 14), y: (p.y || 0) + 90 };
     };
 
     const renderWire = (start, end) => {
@@ -211,7 +225,7 @@ export default function CircuitDiagram({ diagram }) {
             const color = conn.color === 'auto' ? '#3b82f6' : (conn.color || '#3b82f6');
             return (
               <motion.path key={`w-${i}`} d={renderWire(s, e)} stroke={color} strokeWidth="2.8" fill="none" strokeLinecap="round"
-               initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1, delay: i * 0.05 }}
+               initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, delay: i * 0.05 }}
                style={{ filter: "url(#shadow)" }} />
             );
           })}
