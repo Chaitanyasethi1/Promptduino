@@ -51,7 +51,10 @@ void loop() {
   isCompiling: false,
   hasSimulated: false,
   setHasSimulated: (hasSimulated) => set({ hasSimulated }),
-  diagram: null,
+  diagram: {
+    "parts": [{ "type": "arduino-uno", "id": "uno", "name": "Arduino Uno" }],
+    "connections": []
+  },
   setDiagram: (diagram) => set((state) => ({ 
     diagram,
     files: { ...state.files, 'diagram.json': JSON.stringify(diagram, null, 2) }

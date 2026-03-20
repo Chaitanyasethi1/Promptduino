@@ -71,27 +71,54 @@ export default function AgentChat() {
       const reply = response.text || "Sorry, I couldn't generate a response.";
       setMessages(prev => [...prev, { role: 'model', text: reply }]);
       
-      // Extract CPP code block (the main logic)
-      const codeMatch = reply.match(/```(?:cpp|c|arduino)?\n([\s\S]*?)```/);
-      if (codeMatch && codeMatch[1]) {
-        setCode(codeMatch[1].trim());
-      }
+      // 1. Extract the primary code block (usually CPP)
+      const blocks = [...reply.matchAll(/```(?:cpp|c|arduino|json)?\s*([\s\S]*?)```/gi)];
       
-      // Extract Diagram JSON block (specifically looking for JSON or any block following the first one)
-      // We look for a block that contains "parts" or "connections" which are characteristic of our diagram format
-      const allBlocks = [...reply.matchAll(/```(?:json)?\n([\s\S]*?)```/g)];
-      for (const block of allBlocks) {
-        const content = block[1].trim();
-        try {
-          if (content.includes('"parts"') || content.includes('"connections"')) {
-            const data = JSON.parse(content);
-            if (data.parts || data.connections) {
-              setDiagram(data);
-              break; // Found it
+      let cppCode = null;
+      let diagramData = null;
+
+      for (const match of blocks) {
+        const content = match[1].trim();
+        
+        // Check if it's Arduino code (heuristic: contains setup/loop)
+        if (content.includes('setup()') || content.includes('loop()')) {
+          cppCode = content;
+        } 
+        // Check if it's our diagram JSON (heuristic: contains parts/connections)
+        else if (content.includes('"parts"') || content.includes('"connections"')) {
+          try {
+            const parsed = JSON.parse(content);
+            if (parsed.parts || parsed.connections) {
+              diagramData = parsed;
+            }
+          } catch (e) {
+            // Might be a partial JSON or have extra text, try to extract just the { } part
+            const jsonPart = content.match(/\{[\s\S]*\}/);
+            if (jsonPart) {
+              try {
+                const parsed = JSON.parse(jsonPart[0]);
+                if (parsed.parts || parsed.connections) {
+                  diagramData = parsed;
+                }
+              } catch (innerE) {}
             }
           }
-        } catch (e) {
-          // Skip invalid JSON
+        }
+      }
+
+      if (cppCode) setCode(cppCode);
+      if (diagramData) {
+        setDiagram(diagramData);
+      } else {
+        // Final fallback: Try to find a JSON-like structure anywhere in the text if no blocks matched
+        const jsonLike = reply.match(/\{[\s\S]*\}/);
+        if (jsonLike) {
+          try {
+            const parsed = JSON.parse(jsonLike[0]);
+            if (parsed.parts || parsed.connections) {
+              setDiagram(parsed);
+            }
+          } catch (e) {}
         }
       }
       
