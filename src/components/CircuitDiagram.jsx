@@ -50,9 +50,19 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
         <rect x="10" y="80" width="40" height="50" rx="2" fill="#18181b" />
         <rect x="70" y="5" width="120" height="12" rx="1" fill="#18181b" />
         <rect x="70" y="133" width="120" height="12" rx="1" fill="#18181b" />
-        <text x="130" y="75" textAnchor="middle" fill="#fff" fontSize="10px" fontWeight="black" opacity="0.4">ARDUINO UNO</text>
-        {safePins.slice(0, 10).map((p, i) => <circle key={`p1-${i}`} cx={75 + i * 11} cy="11" r="2" fill="#fbbf24" />)}
-        {safePins.slice(10, 25).map((p, i) => <circle key={`p2-${i}`} cx={75 + i * 11} cy="139" r="2" fill="#fbbf24" />)}
+        {safePins.slice(0, 10).map((p, i) => (
+          <g key={`p1-${i}`}>
+            <circle cx={75 + i * 11} cy="11" r="2" fill="#fbbf24" />
+            <text x={75 + i * 11} y={22} textAnchor="middle" fill="#fff" fontSize="5px" opacity="0.8">{p}</text>
+          </g>
+        ))}
+        {safePins.slice(10, 25).map((p, i) => (
+          <g key={`p2-${i}`}>
+            <circle cx={75 + i * 11} cy="139" r="2" fill="#fbbf24" />
+            <text x={75 + i * 11} y={133} textAnchor="middle" fill="#fff" fontSize="5px" opacity="0.8">{p}</text>
+          </g>
+        ))}
+        <text x="130" y="75" textAnchor="middle" fill="#fff" fontSize="10px" fontWeight="black" opacity="0.2">ARDUINO UNO</text>
       </g>
     );
   }
@@ -62,10 +72,15 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
     return (
       <g>
         <rect width="220" height="100" rx="4" fill="#166534" stroke="#14532d" strokeWidth="2" />
-        <rect x="10" y="10" width="200" height="80" rx="2" fill="#3f6212" />
-        <rect x="15" y="15" width="190" height="70" rx="1" fill="#365314" />
-        <rect x="25" y="-5" width="160" height="10" fill="#18181b" />
-        {safePins.slice(0, 16).map((p, i) => <circle key={`lp-${i}`} cx={30 + i * 10} cy="0" r="2" fill="#fbbf24" />)}
+        <rect x="10" y="10" width="200" height="70" rx="2" fill="#3f6212" />
+        <rect x="15" y="15" width="190" height="60" rx="1" fill="#365314" />
+        <rect x="25" y="85" width="160" height="10" fill="#18181b" />
+        {safePins.map((p, i) => (
+          <g key={`lp-${i}`}>
+            <circle cx={30 + i * 10} cy="90" r="2.5" fill="#fbbf24" stroke="#fff" strokeWidth="0.5" />
+            <text x={30 + i * 10} y={80} textAnchor="middle" fill="#fff" fontSize="5px" fontWeight="bold">{p}</text>
+          </g>
+        ))}
       </g>
     );
   }
@@ -112,21 +127,46 @@ const ComponentIcon = ({ type, name, id, pins = [] }) => {
     );
   }
 
+  // 8. ESP32-C3 / Generic MCU
+  if (t.includes('esp') || t.includes('c3')) {
+    const half = Math.max(1, Math.ceil(safePins.length/2));
+    const width = Math.max(160, half * 20);
+    return (
+      <g>
+        <rect width={width} height={120} rx="6" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
+        <rect x={(width-40)/2} y={20} width="40" height="30" rx="4" fill="#a1a1aa" />
+        <text x={width/2} y={65} textAnchor="middle" fill="#71717a" fontSize="8px" fontWeight="bold">ESP32 MODULE</text>
+        {safePins.slice(0, half).map((p, i) => (
+          <g key={`et-${i}`}>
+            <circle cx={20 + (i * 18)} cy="5" r="3" fill="#fbbf24" stroke="#fff" strokeWidth="0.5" />
+            <text x={20 + (i * 18)} y={15} textAnchor="start" transform={`rotate(90, ${20 + i*18}, 15)`} fill="#a1a1aa" fontSize="7px" fontWeight="bold">{p}</text>
+          </g>
+        ))}
+         {safePins.slice(half).map((p, i) => (
+          <g key={`eb-${i}`}>
+            <circle cx={20 + (i * 18)} cy="115" r="3" fill="#fbbf24" stroke="#fff" strokeWidth="0.5" />
+            <text x={20 + (i * 18)} y={105} textAnchor="end" transform={`rotate(90, ${20 + i*18}, 105)`} fill="#a1a1aa" fontSize="7px" fontWeight="bold">{p}</text>
+          </g>
+        ))}
+      </g>
+    );
+  }
+
   // Fallback: Professional Dark Module
   const pinCount = Math.max(1, safePins.length);
-  const width = Math.max(80, pinCount * 18);
+  const width = Math.max(100, pinCount * 22);
   return (
     <g>
-      <rect width={width} height={80} rx="4" fill="#09090b" stroke="#3f3f46" strokeWidth="2" />
+      <rect width={width} height={100} rx="4" fill="#09090b" stroke="#3f3f46" strokeWidth="2" />
       <rect x="2" y="2" width={width-4} height={20} rx="2" fill="#18181b" />
-      <text x={width/2} y={15} textAnchor="middle" fill="#71717a" fontSize="8px" fontWeight="bold" fontFamily="monospace">{(name || type || '').toUpperCase()}</text>
+      <text x={width/2} y={15} textAnchor="middle" fill="#71717a" fontSize="9px" fontWeight="black" fontFamily="monospace">{(name || type || '').toUpperCase()}</text>
       {safePins.map((p, i) => {
-        const px = 10 + i * 14;
+        const px = 15 + i * 18;
         return (
           <g key={`f-${i}`}>
-            <rect x={px-1} y={80} width="2" height="10" fill="#fbbf24" />
-            <circle cx={px} cy={90} r="2.5" fill="#f59e0b" stroke="#fff" strokeWidth="0.5" />
-            <text x={px} y={75} textAnchor="middle" fill="#a1a1aa" fontSize="6px">{p}</text>
+            <rect x={px-1} y={90} width="2" height="10" fill="#fbbf24" />
+            <circle cx={px} cy={100} r="3" fill="#f59e0b" stroke="#fff" strokeWidth="0.5" />
+            <text x={px} y={85} textAnchor="end" transform={`rotate(90, ${px}, 85)`} fill="#a1a1aa" fontSize="7px" fontWeight="bold">{p}</text>
           </g>
         );
       })}
@@ -201,22 +241,22 @@ export default function CircuitDiagram({ diagram }) {
       if (t.includes('uno') || t.includes('arduino')) {
         return { x: px + 75 + (idx % 10) * 11, y: py + (idx < 10 ? 11 : 139) };
       }
-      if (t.includes('lcd')) return { x: px + 30 + (idx % 16) * 10, y: py };
+      if (t.includes('lcd')) return { x: px + 30 + (idx % 16) * 10, y: py + 90 };
       if (t.includes('servo')) return { x: px + 90, y: py + 12 + (idx * 6) };
       if (t.includes('ultra')) return { x: px + 35 + (idx * 10), y: py + 55 };
       if (t.includes('dht')) return { x: px + 15 + (idx * 10), y: py + 85 };
-      if (t.includes('esp32')) {
+      if (t.includes('esp')) {
         const half = Math.max(1, Math.ceil(safePins.length / 2));
-        return { x: px + 25 + (idx % half) * 15, y: py + (idx < half ? 5 : 145) };
+        return { x: px + 20 + (idx % half) * 18, y: py + (idx < half ? 5 : 115) };
       }
       // Generic Module Fallback Pin
-      return { x: px + 10 + (idx * 14), y: py + 90 };
+      return { x: px + 15 + (idx * 18), y: py + 100 };
     };
 
     const renderWire = (start, end) => {
       const sx = Number(start.x) || 0; const sy = Number(start.y) || 0;
       const ex = Number(end.x) || 0; const ey = Number(end.y) || 0;
-      const midY = Math.max(sy, ey) + 80;
+      const midY = (sy + ey) / 2 + (sy < ey ? 40 : -40);
       return `M ${sx} ${sy} C ${sx} ${midY}, ${ex} ${midY}, ${ex} ${ey}`;
     };
 
