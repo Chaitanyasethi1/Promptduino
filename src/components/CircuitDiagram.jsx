@@ -1,3 +1,6 @@
+import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
+
 const ComponentIcon = ({ type, name, id, pins = [] }) => {
   const t = type?.toLowerCase() || '';
   const safePins = (Array.isArray(pins) ? pins : []).filter(p => typeof p === 'string' && p.length > 0);
