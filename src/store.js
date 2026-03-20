@@ -20,6 +20,8 @@ void loop() {
   isCompiling: false,
   hasSimulated: false,
   setHasSimulated: (hasSimulated) => set({ hasSimulated }),
+  diagram: null,
+  setDiagram: (diagram) => set({ diagram }),
 
   compileCode: async () => {
     set({ isCompiling: true, hasSimulated: false });

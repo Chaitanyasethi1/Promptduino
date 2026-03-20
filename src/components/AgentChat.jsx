@@ -18,8 +18,9 @@ const MODEL_NAME = 'gemini-2.5-flash';
 const SYSTEM_PROMPT = `You are the PromptDuino AI Agent. Your job is to help the user write, debug, and understand Arduino C++ code. Provide clear and concise explanations. 
 CRITICAL RULES:
 1. When generating code, you MUST wrap the complete, runnable Arduino sketch inside a standard markdown cpp code block (e.g. \`\`\`cpp ... \`\`\`).
-2. The UI will automatically extract this block and directly update the user's editor. Do not omit setup() or loop().
-3. Do not provide multiple code blocks unless you want the first one to be injected into the main editor.`;
+2. Additionally, ALWAYS provide a connection diagram in a JSON code block (e.g. \`\`\`json ... \`\`\`) describing the parts and their pins.
+3. The diagram JSON should follow this structure: { "parts": [{ "type": "arduino-uno", "id": "uno", "name": "Arduino Uno" }, { "type": "led", "id": "led1", "name": "Red LED" }], "connections": [{ "from": "uno:13", "to": "led1:anode" }, { "from": "uno:GND", "to": "led1:cathode" }] }.
+4. The UI will extract these blocks and update the editor and the simulation diagram.`;
 
 export default function AgentChat() {
   const [messages, setMessages] = useState([
@@ -30,6 +31,7 @@ export default function AgentChat() {
   const messagesEndRef = useRef(null);
   
   const setCode = useStore(state => state.setCode);
+  const setDiagram = useStore(state => state.setDiagram);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -71,6 +73,19 @@ export default function AgentChat() {
       const codeMatch = reply.match(/```(?:cpp|c|arduino)?\n([\s\S]*?)```/);
       if (codeMatch && codeMatch[1]) {
         setCode(codeMatch[1].trim());
+      }
+      
+      // Automatically extract diagram.json block
+      const jsonMatch = reply.match(/```(?:json)?\n([\s\S]*?)```/);
+      if (jsonMatch && jsonMatch[1]) {
+        try {
+          const data = JSON.parse(jsonMatch[1].trim());
+          if (data.parts || data.connections) {
+            setDiagram(data);
+          }
+        } catch (e) {
+          console.error("Failed to parse diagram JSON", e);
+        }
       }
       
     } catch (error) {
