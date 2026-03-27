@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Bot, User, Send, Sparkles, Loader2, Key, RotateCcw } from 'lucide-react';
 import Groq from 'groq-sdk';
 import { useStore } from '../store';
+import { GROQ_API_KEY } from '../groq-key';
 
 // Using Groq's fast Llama 3 model
 const MODEL_NAME = 'llama-3.3-70b-versatile';
@@ -33,11 +34,11 @@ export default function AgentChat() {
   const storageKey = localStorage.getItem('GROQ_API_KEY');
   const isValid = (k) => k && k !== 'undefined' && k !== 'null' && k.startsWith('gsk_');
   
-  const initialApiKey = isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : null);
-  const sourceMessage = isValid(envKey) ? "(.env.local detected)" : (isValid(storageKey) ? "(saved in browser)" : "(missing - please paste below)");
+  // Use config file as priority to ensure it 'just works' for the user
+  const initialApiKey = isValid(GROQ_API_KEY) ? GROQ_API_KEY : (isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : null));
 
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: `Hello! I am the PromptDuino agent ${sourceMessage}. Describe what you'd like your Arduino to do, and I'll generate the code.` }
+    { role: 'assistant', text: "Hello! I am the PromptDuino agent. Describe what you'd like your Arduino to do, and I'll generate the code." }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
