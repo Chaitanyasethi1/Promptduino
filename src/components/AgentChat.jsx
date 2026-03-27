@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { Bot, User, Send, Sparkles, Loader2, RotateCcw } from 'lucide-react';
 import Groq from 'groq-sdk';
 import { useStore } from '../store.js';
-import { GROQ_API_KEY } from '../groq-key.js';
 
 // Using Groq's fast Llama 3 model
 const MODEL_NAME = 'llama-3.3-70b-versatile';
@@ -25,22 +24,39 @@ CRITICAL HARDWARE RULES:
 The UI will render these blocks. Your diagrams must match real-world wiring diagrams for clarity.`;
 
 export default function AgentChat() {
+  const [messages, setMessages] = useState([
+    { role: 'assistant', text: "Hello! I am the PromptDuino agent. Describe what you'd like your Arduino to do, and I'll generate the code." }
+  ]);
 
-  // API Key Management
+  // API Key Management 
   const envKey = import.meta.env.VITE_GROQ_API_KEY;
   const storageKey = localStorage.getItem('GROQ_API_KEY');
   const isValid = (k) => k && k !== 'undefined' && k !== 'null' && k.startsWith('gsk_');
   
-  // Use config file as priority to ensure it 'just works' for the user
-  const initialApiKey = isValid(GROQ_API_KEY) ? GROQ_API_KEY : (isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : null));
+  const [apiKey, setApiKey] = useState(isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : null));
+  const [isKeyValid, setIsKeyValid] = useState(isValid(envKey) || isValid(storageKey));
 
-  const [messages, setMessages] = useState([
-    { role: 'assistant', text: "Hello! I am the PromptDuino agent. Describe what you'd like your Arduino to do, and I'll generate the code." }
-  ]);
+  // Dynamic fallback for local development (src/groq-key.js)
+  // We use @vite-ignore to prevent Vercel from failing during the build if the file is missing
+  useEffect(() => {
+    if (!isKeyValid) {
+      const loadLocalKey = async () => {
+        try {
+          const mod = await import(/* @vite-ignore */ '../groq-key.js');
+          if (mod.GROQ_API_KEY && isValid(mod.GROQ_API_KEY)) {
+            setApiKey(mod.GROQ_API_KEY);
+            setIsKeyValid(true);
+          }
+        } catch (e) {
+          // File missing in production/Vercel - this is expected
+        }
+      };
+      loadLocalKey();
+    }
+  }, [isKeyValid, isValid]);
+  
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState(initialApiKey);
-  const [isKeyValid, setIsKeyValid] = useState(!!initialApiKey);
   
   const messagesEndRef = useRef(null);
   const setCode = useStore((state) => state.setCode);
