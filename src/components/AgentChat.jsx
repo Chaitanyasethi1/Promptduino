@@ -29,11 +29,13 @@ export default function AgentChat() {
   ];
 
   // API Key Management
-  // Priority: 1. Environment Variable, 2. Local Storage
   const envKey = import.meta.env.VITE_GROQ_API_KEY;
   const storageKey = localStorage.getItem('GROQ_API_KEY');
   
-  const initialApiKey = envKey || storageKey || null;
+  // Guard against string literals like 'undefined' or 'null' from build systems
+  const isValid = (k) => k && k !== 'undefined' && k !== 'null' && k.startsWith('gsk_');
+  
+  const initialApiKey = isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : null);
   
   const [messages, setMessages] = useState(defaultMessages);
   const [input, setInput] = useState('');
@@ -54,14 +56,15 @@ export default function AgentChat() {
   }, [messages, isLoading]);
 
   const saveApiKey = () => {
-    if (input.trim().startsWith('gsk_')) {
-      localStorage.setItem('GROQ_API_KEY', input.trim());
-      setApiKey(input.trim());
+    const rawInput = input.trim().replace(/^["']|["']$/g, ''); // Handle accidental quotes
+    if (rawInput.startsWith('gsk_')) {
+      localStorage.setItem('GROQ_API_KEY', rawInput);
+      setApiKey(rawInput);
       setIsKeyValid(true);
       setInput('');
-      setMessages(prev => [...prev, { role: 'assistant', text: "API Key saved successfully! I am now connected to the Groq network. How can I help you build your circuit?" }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: "API Key saved successfully! I am now connected. How can I help you today?" }]);
     } else {
-      setMessages(prev => [...prev, { role: 'assistant', text: "Error: That doesn't look like a valid Groq API Key (it should start with 'gsk_'). Please try again." }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: "That doesn't look like a valid Groq API Key (it should start with 'gsk_'). Please paste the key directly. If you've already added it to .env.local, try restarting your Vite server." }]);
     }
   };
 
