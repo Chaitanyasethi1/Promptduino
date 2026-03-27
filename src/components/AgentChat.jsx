@@ -25,18 +25,13 @@ The UI will render these blocks. Your diagrams must match real-world wiring diag
 
 export default function AgentChat() {
   const defaultMessages = [
-    { role: 'model', text: "Hello! I am the PromptDuino agent. Describe what you'd like your Arduino to do, and I'll generate the code." }
+    { role: 'assistant', text: "Hello! I am the PromptDuino agent. Describe what you'd like your Arduino to do, and I'll generate the code." }
   ];
 
-  
   // API Key Management - Providing a permanent global key
-  const GLOBAL_KEY = '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';
-  const initialApiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem('GROQ_API_KEY') || GLOBAL_KEY;
+  // We'll prioritize the environment variable first
+  const initialApiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem('GROQ_API_KEY') || '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';
   
-  if (!initialApiKey) {
-    defaultMessages.push({ role: 'model', text: "🔑 Please paste your Groq API Key below to continue (it starts with 'gsk_'). Once saved, it will be kept securely in your browser." });
-  }
-
   const [messages, setMessages] = useState(defaultMessages);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -61,9 +56,9 @@ export default function AgentChat() {
       setApiKey(input.trim());
       setIsKeyValid(true);
       setInput('');
-      setMessages(prev => [...prev, { role: 'model', text: "API Key saved successfully! I am now connected to the Groq network. How can I help you build your circuit?" }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: "API Key saved successfully! I am now connected to the Groq network. How can I help you build your circuit?" }]);
     } else {
-      setMessages(prev => [...prev, { role: 'model', text: "Error: That doesn't look like a valid Groq API Key (it should start with 'gsk_'). Please try again." }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: "Error: That doesn't look like a valid Groq API Key (it should start with 'gsk_'). Please try again." }]);
     }
   };
 
@@ -82,7 +77,7 @@ export default function AgentChat() {
 
     try {
       const currentCode = useStore.getState().code;
-      const chatHistoryText = messages.filter(msg => msg.text.indexOf('API Key') === -1).map(msg => `[${msg.role === 'model' ? 'assistant' : 'user'}]: ${msg.text}`).join('\n');
+      const chatHistoryText = messages.map(msg => `[${msg.role}]: ${msg.text}`).join('\n');
       
       const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
       
@@ -92,13 +87,13 @@ export default function AgentChat() {
           { role: 'user', content: `[Current Editor Code]:\n\`\`\`cpp\n${currentCode}\n\`\`\`\n\nChat History:\n${chatHistoryText}\n\nUser Request: ${userMessage}` }
         ],
         model: MODEL_NAME,
-        temperature: 0.2, // Low temp for reliable formatting
+        temperature: 0.2,
       });
 
       const reply = completion.choices[0]?.message?.content || "Sorry, I couldn't generate a response.";
-      setMessages(prev => [...prev, { role: 'model', text: reply }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: reply }]);
       
-      // 1. Extract the primary code block (usually CPP)
+      // Extract logic
       const blocks = [...reply.matchAll(/```(?:cpp|c|arduino|json)?\s*([\s\S]*?)```/gi)];
       
       let cppCode = null;
@@ -106,20 +101,15 @@ export default function AgentChat() {
 
       for (const match of blocks) {
         const content = match[1].trim();
-        
-        // Check if it's Arduino code (heuristic: contains setup/loop)
         if (content.includes('setup()') || content.includes('loop()')) {
           cppCode = content;
-        } 
-        // Check if it's our diagram JSON (heuristic: contains parts/connections)
-        else if (content.includes('"parts"') || content.includes('"connections"')) {
+        } else if (content.includes('"parts"') || content.includes('"connections"')) {
           try {
             const parsed = JSON.parse(content);
             if (parsed.parts || parsed.connections) {
               diagramData = parsed;
             }
           } catch (e) {
-            // Might be a partial JSON or have extra text, try to extract just the { } part
             const jsonPart = content.match(/\{[\s\S]*\}/);
             if (jsonPart) {
               try {
@@ -134,25 +124,12 @@ export default function AgentChat() {
       }
 
       if (cppCode) setCode(cppCode);
-      if (diagramData) {
-        setDiagram(diagramData);
-      } else {
-        // Final fallback: Try to find a JSON-like structure anywhere in the text if no blocks matched
-        const jsonLike = reply.match(/\{[\s\S]*\}/);
-        if (jsonLike) {
-          try {
-            const parsed = JSON.parse(jsonLike[0]);
-            if (parsed.parts || parsed.connections) {
-              setDiagram(parsed);
-            }
-          } catch (e) {}
-        }
-      }
+      if (diagramData) setDiagram(diagramData);
       
     } catch (error) {
       console.error("AI Error:", error);
-      const errorMsg = error.message || "Unable to connect to Gemini API.";
-      setMessages(prev => [...prev, { role: 'model', text: `Error: ${errorMsg}. Please check your API key, connection, or model availability.` }]);
+      const errorMsg = error.message || "Unable to connect to AI service.";
+      setMessages(prev => [...prev, { role: 'assistant', text: `Error: ${errorMsg}. Please check your API key, connection, or model availability.` }]);
     } finally {
       setIsLoading(false);
     }
@@ -174,11 +151,10 @@ export default function AgentChat() {
         </div>
       </div>
       
-      {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-2 space-y-5">
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex items-start ${msg.role === 'user' ? 'justify-end' : ''}`}>
-            {msg.role === 'model' && (
+            {msg.role === 'assistant' && (
               <div className="bg-[#798866] rounded-full p-2 mr-3 shrink-0 shadow-sm mt-1">
                 <Bot size={15} className="text-[#F5F3EC]" />
               </div>
@@ -186,7 +162,7 @@ export default function AgentChat() {
             
             <div className={`
               px-4 py-3 rounded-2xl text-[13.5px] shadow-sm leading-relaxed max-w-[85%] whitespace-pre-wrap
-              ${msg.role === 'model' 
+              ${msg.role === 'assistant' 
                 ? 'bg-[#F5F3EC] border border-[#E0DCD1] text-[#3A3A3A] rounded-tl-sm' 
                 : 'bg-[#E0DCD1] text-[#3A3A3A] rounded-tr-sm'
               }
@@ -216,7 +192,6 @@ export default function AgentChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Box */}
       <div className="p-4 bg-[#EFECE1]">
         <div className="relative flex items-center shadow-sm rounded-xl bg-[#F5F3EC] border border-[#E0DCD1] focus-within:border-[#A3B0A3] focus-within:ring-2 focus-within:ring-[#A3B0A3]/20 transition-all">
           <input 
