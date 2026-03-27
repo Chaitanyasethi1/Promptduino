@@ -1,9 +1,9 @@
-import Navbar from './components/Navbar';
-import FileExplorer from './components/FileExplorer';
-import CodeEditor from './components/CodeEditor';
-import SerialMonitor from './components/SerialMonitor';
-import SimulationPanel from './components/SimulationPanel';
-import AgentChat from './components/AgentChat';
+import Navbar from './components/Navbar.jsx';
+import FileExplorer from './components/FileExplorer.jsx';
+import CodeEditor from './components/CodeEditor.jsx';
+import SerialMonitor from './components/SerialMonitor.jsx';
+import SimulationPanel from './components/SimulationPanel.jsx';
+import AgentChat from './components/AgentChat.jsx';
 
 function App() {
   return (

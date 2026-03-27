@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, User, Send, Sparkles, Loader2, Key, RotateCcw } from 'lucide-react';
+import { Bot, User, Send, Sparkles, Loader2, RotateCcw } from 'lucide-react';
 import Groq from 'groq-sdk';
-import { useStore } from '../store';
-import { GROQ_API_KEY } from '../groq-key';
+import { useStore } from '../store.js';
+import { GROQ_API_KEY } from '../groq-key.js';
 
 // Using Groq's fast Llama 3 model
 const MODEL_NAME = 'llama-3.3-70b-versatile';
@@ -25,9 +25,6 @@ CRITICAL HARDWARE RULES:
 The UI will render these blocks. Your diagrams must match real-world wiring diagrams for clarity.`;
 
 export default function AgentChat() {
-  const defaultMessages = [
-    { role: 'assistant', text: "Hello! I am the PromptDuino agent. Describe what you'd like your Arduino to do, and I'll generate the code." }
-  ];
 
   // API Key Management
   const envKey = import.meta.env.VITE_GROQ_API_KEY;

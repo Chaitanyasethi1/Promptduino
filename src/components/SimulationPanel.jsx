@@ -1,7 +1,7 @@
 import { Monitor, RefreshCcw, Loader2, Cpu } from 'lucide-react';
-import { useStore } from '../store';
+import { useStore } from '../store.js';
 import { useEffect } from 'react';
-import CircuitDiagram from './CircuitDiagram';
+import CircuitDiagram from './CircuitDiagram.jsx';
 
 export default function SimulationPanel() {
   const isSimulating = useStore(state => state.isSimulating);
