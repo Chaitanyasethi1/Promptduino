@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, User, Send, Sparkles, Loader2, Key } from 'lucide-react';
+import { Bot, User, Send, Sparkles, Loader2, Key, RotateCcw } from 'lucide-react';
 import Groq from 'groq-sdk';
 import { useStore } from '../store';
 
@@ -28,9 +28,12 @@ export default function AgentChat() {
     { role: 'assistant', text: "Hello! I am the PromptDuino agent. Describe what you'd like your Arduino to do, and I'll generate the code." }
   ];
 
-  // API Key Management - Providing a permanent global key
-  // We'll prioritize the environment variable first
-  const initialApiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem('GROQ_API_KEY') || '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';
+  // API Key Management
+  // Priority: 1. Environment Variable, 2. Local Storage
+  const envKey = import.meta.env.VITE_GROQ_API_KEY;
+  const storageKey = localStorage.getItem('GROQ_API_KEY');
+  
+  const initialApiKey = envKey || storageKey || null;
   
   const [messages, setMessages] = useState(defaultMessages);
   const [input, setInput] = useState('');
@@ -128,11 +131,28 @@ export default function AgentChat() {
       
     } catch (error) {
       console.error("AI Error:", error);
-      const errorMsg = error.message || "Unable to connect to AI service.";
-      setMessages(prev => [...prev, { role: 'assistant', text: `Error: ${errorMsg}. Please check your API key, connection, or model availability.` }]);
+      
+      const isUnauthorized = error.status === 401 || (error.message && error.message.includes('401'));
+      
+      if (isUnauthorized) {
+        localStorage.removeItem('GROQ_API_KEY');
+        setIsKeyValid(false);
+        setApiKey(null);
+        setMessages(prev => [...prev, { role: 'assistant', text: "Error: 401 Invalid API Key. The stored key was rejected. Please paste a fresh, valid Groq API Key (gsk_...) below to reset." }]);
+      } else {
+        const errorMsg = error.message || "Unable to connect to AI service.";
+        setMessages(prev => [...prev, { role: 'assistant', text: `Error: ${errorMsg}. Please check your connection or model availability.` }]);
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleManualReset = () => {
+    localStorage.removeItem('GROQ_API_KEY');
+    setIsKeyValid(false);
+    setApiKey(null);
+    setMessages(prev => [...prev, { role: 'assistant', text: "API Key cleared. Please paste your fresh Groq API Key below." }]);
   };
 
   const handleKeyDown = (e) => {
@@ -149,6 +169,13 @@ export default function AgentChat() {
           <Sparkles size={14} className="mr-2 text-[#798866]" />
           Agent
         </div>
+        <button 
+          onClick={handleManualReset}
+          title="Reset API Key"
+          className="p-1 hover:bg-[#E0DCD1] rounded-md transition-colors text-[#7A7870]"
+        >
+          <RotateCcw size={13} />
+        </button>
       </div>
       
       <div className="flex-1 overflow-y-auto px-4 py-2 space-y-5">
