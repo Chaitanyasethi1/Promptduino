@@ -31,13 +31,14 @@ export default function AgentChat() {
   // API Key Management
   const envKey = import.meta.env.VITE_GROQ_API_KEY;
   const storageKey = localStorage.getItem('GROQ_API_KEY');
-  
-  // Guard against string literals like 'undefined' or 'null' from build systems
   const isValid = (k) => k && k !== 'undefined' && k !== 'null' && k.startsWith('gsk_');
   
   const initialApiKey = isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : null);
-  
-  const [messages, setMessages] = useState(defaultMessages);
+  const sourceMessage = isValid(envKey) ? "(.env.local detected)" : (isValid(storageKey) ? "(saved in browser)" : "(missing - please paste below)");
+
+  const [messages, setMessages] = useState([
+    { role: 'assistant', text: `Hello! I am the PromptDuino agent ${sourceMessage}. Describe what you'd like your Arduino to do, and I'll generate the code.` }
+  ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [apiKey, setApiKey] = useState(initialApiKey);
