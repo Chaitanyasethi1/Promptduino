@@ -12,7 +12,7 @@ export default function Navbar() {
     <div className="flex items-center justify-between h-full px-4 text-sm tracking-wide">
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-3 text-[#6392A8] font-bold mr-2">
-          <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain mix-blend-multiply" />
+          <img src="/logo.png" alt="Logo" className="w-7 h-7 object-contain mix-blend-multiply" />
           <span className="text-base font-extrabold tracking-widest text-slate-800 uppercase mt-0.5">PromptDuino</span>
         </div>
         
