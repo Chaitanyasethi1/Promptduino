@@ -114,9 +114,7 @@ export default function AgentChat() {
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "HTTP-Referer": window.location.origin,
-          "X-Title": "PromptDuino",
+          "Authorization": `Bearer ${apiKey.trim()}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
