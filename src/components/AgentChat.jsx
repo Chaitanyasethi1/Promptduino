@@ -28,12 +28,13 @@ export default function AgentChat() {
   ]);
 
   // API Key Management 
+  const DEFAULT_KEY = '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';
   const envKey = import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_GROQ_API_KEY;
   const storageKey = localStorage.getItem('AI_API_KEY');
   const isValid = (k) => k && k !== 'undefined' && k !== 'null' && (k.startsWith('sk-or-') || k.startsWith('gsk_'));
   
-  const [apiKey, setApiKey] = useState(isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : null));
-  const [isKeyValid, setIsKeyValid] = useState(isValid(envKey) || isValid(storageKey));
+  const [apiKey, setApiKey] = useState(isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : DEFAULT_KEY));
+  const [isKeyValid, setIsKeyValid] = useState(true); // Forced to true since we have a default key
 
   // Dynamic fallback for local development (src/groq-key.js)
   // We use @vite-ignore to prevent Vercel from failing during the build if the file is missing
@@ -93,7 +94,7 @@ export default function AgentChat() {
         saveApiKey();
         return;
       } else {
-        setMessages(prev => [...prev, { role: 'assistant', text: "Please provide a valid API Key first." }]);
+        setMessages(prev => [...prev, { role: 'assistant', text: "API Key nahi mili! Agar aapne .env.local mein key daal di hai, toh please terminal mein 'npm run dev' ko restart karein aur page refresh karein." }]);
         return;
       }
     }
