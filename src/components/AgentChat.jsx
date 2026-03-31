@@ -28,15 +28,13 @@ export default function AgentChat() {
   ]);
 
   // API Key Management 
-  const DEFAULT_KEY = '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';
   const envKey = import.meta.env.VITE_OPENROUTER_API_KEY;
   const storageKey = localStorage.getItem('AI_API_KEY');
   const isValid = (k) => k && k !== 'undefined' && k !== 'null' && k.startsWith('sk-or-');
   
-  // Try to use the hardcoded key first if nothing else is valid
-  const initialKey = isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : DEFAULT_KEY);
-  const [apiKey, setApiKey] = useState(initialKey);
-  const [isKeyValid, setIsKeyValid] = useState(isValid(initialKey));
+  // No longer hardcoding the key for security. Use environment variables.
+  const [apiKey, setApiKey] = useState(isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : null));
+  const [isKeyValid, setIsKeyValid] = useState(isValid(apiKey));
 
   // Dynamic fallback for local development (src/groq-key.js)
   useEffect(() => {
