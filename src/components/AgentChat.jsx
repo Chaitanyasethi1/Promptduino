@@ -3,7 +3,7 @@ import { Bot, User, Send, Sparkles, Loader2, RotateCcw } from 'lucide-react';
 import { useStore } from '../store.js';
 
 // Using OpenRouter's more stable Qwen 2.5 72B model
-const MODEL_NAME = 'google/gemini-2.0-flash-lite-preview-02-05:free';
+const MODEL_NAME = 'qwen/qwen3-coder:free';
 
 const SYSTEM_PROMPT = `You are the PromptDuino AI Agent, a master hardware architect. Your mission is to provide 100% accurate Arduino/ESP32 code and accompanying circuit diagrams.
 
