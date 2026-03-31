@@ -88,9 +88,14 @@ export default function AgentChat() {
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    if (!isKeyValid) {
-      saveApiKey();
-      return;
+    if (!isKeyValid && !apiKey) {
+      if (isValid(input.trim())) {
+        saveApiKey();
+        return;
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', text: "Please provide a valid API Key first." }]);
+        return;
+      }
     }
     
     const userMessage = input.trim();
@@ -264,7 +269,7 @@ export default function AgentChat() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             className="w-full bg-transparent text-[13.5px] text-[#3A3A3A] outline-none py-3 pl-4 pr-11 placeholder-[#A3B0A3]"
-            placeholder={isKeyValid ? "Type your prompt for Arduino..." : "Paste your OpenRouter API Key (sk-or-...) here..."}
+            placeholder="Type your prompt for Arduino..."
             disabled={isLoading}
           />
           <button 
