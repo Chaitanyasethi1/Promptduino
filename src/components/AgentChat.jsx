@@ -116,7 +116,7 @@ export default function AgentChat() {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey.trim()}`,
-          "HTTP-Referer": "https://promptduino.vercel.app", 
+          "HTTP-Referer": "https://www.promptduino.in/", 
           "X-OpenRouter-Title": "PromptDuino",
           "Content-Type": "application/json"
         },
