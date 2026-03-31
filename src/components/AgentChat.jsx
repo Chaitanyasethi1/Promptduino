@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bot, User, Send, Sparkles, Loader2, RotateCcw } from 'lucide-react';
-import Groq from 'groq-sdk';
 import { useStore } from '../store.js';
 
-// Using Groq's fast Llama 3 model
-const MODEL_NAME = 'llama-3.3-70b-versatile';
+// Using OpenRouter's Qwen 3 Next 80B model
+const MODEL_NAME = 'qwen/qwen3-next-80b-a3b-instruct:free';
 
 const SYSTEM_PROMPT = `You are the PromptDuino AI Agent, a master hardware architect. Your mission is to provide 100% accurate Arduino/ESP32 code and accompanying circuit diagrams.
 
@@ -29,9 +28,9 @@ export default function AgentChat() {
   ]);
 
   // API Key Management 
-  const envKey = import.meta.env.VITE_GROQ_API_KEY;
-  const storageKey = localStorage.getItem('GROQ_API_KEY');
-  const isValid = (k) => k && k !== 'undefined' && k !== 'null' && k.startsWith('gsk_');
+  const envKey = import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_GROQ_API_KEY;
+  const storageKey = localStorage.getItem('AI_API_KEY');
+  const isValid = (k) => k && k !== 'undefined' && k !== 'null' && (k.startsWith('sk-or-') || k.startsWith('gsk_'));
   
   const [apiKey, setApiKey] = useState(isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : null));
   const [isKeyValid, setIsKeyValid] = useState(isValid(envKey) || isValid(storageKey));
@@ -43,8 +42,9 @@ export default function AgentChat() {
       const loadLocalKey = async () => {
         try {
           const mod = await import(/* @vite-ignore */ '../groq-key.js');
-          if (mod.GROQ_API_KEY && isValid(mod.GROQ_API_KEY)) {
-            setApiKey(mod.GROQ_API_KEY);
+          const localKey = mod.OPENROUTER_API_KEY || mod.GROQ_API_KEY;
+          if (localKey && isValid(localKey)) {
+            setApiKey(localKey);
             setIsKeyValid(true);
           }
         } catch (e) {
@@ -72,14 +72,14 @@ export default function AgentChat() {
 
   const saveApiKey = () => {
     const rawInput = input.trim().replace(/^["']|["']$/g, ''); // Handle accidental quotes
-    if (rawInput.startsWith('gsk_')) {
-      localStorage.setItem('GROQ_API_KEY', rawInput);
+    if (isValid(rawInput)) {
+      localStorage.setItem('AI_API_KEY', rawInput);
       setApiKey(rawInput);
       setIsKeyValid(true);
       setInput('');
       setMessages(prev => [...prev, { role: 'assistant', text: "API Key saved successfully! I am now connected. How can I help you today?" }]);
     } else {
-      setMessages(prev => [...prev, { role: 'assistant', text: "That doesn't look like a valid Groq API Key (it should start with 'gsk_'). Please paste the key directly. If you've already added it to .env.local, try restarting your Vite server." }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: "That doesn't look like a valid API Key (should start with 'sk-or-' or 'gsk_'). Please paste the key directly." }]);
     }
   };
 
@@ -98,19 +98,36 @@ export default function AgentChat() {
 
     try {
       const currentCode = useStore.getState().code;
-      const chatHistoryText = messages.map(msg => `[${msg.role}]: ${msg.text}`).join('\n');
+      const chatHistory = messages.map(msg => ({
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: msg.text
+      }));
       
-      const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-      
-      const completion = await groq.chat.completions.create({
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: `[Current Editor Code]:\n\`\`\`cpp\n${currentCode}\n\`\`\`\n\nChat History:\n${chatHistoryText}\n\nUser Request: ${userMessage}` }
-        ],
-        model: MODEL_NAME,
-        temperature: 0.2,
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "HTTP-Referer": window.location.origin,
+          "X-Title": "PromptDuino",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          "model": MODEL_NAME,
+          "messages": [
+            { "role": "system", "content": SYSTEM_PROMPT },
+            ...chatHistory,
+            { "role": "user", "content": `[Current Editor Code]:\n\`\`\`cpp\n${currentCode}\n\`\`\`\n\nUser Request: ${userMessage}` }
+          ],
+          "temperature": 0.2
+        })
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const completion = await response.json();
       const reply = completion.choices[0]?.message?.content || "Sorry, I couldn't generate a response.";
       setMessages(prev => [...prev, { role: 'assistant', text: reply }]);
       
@@ -150,13 +167,13 @@ export default function AgentChat() {
     } catch (error) {
       console.error("AI Error:", error);
       
-      const isUnauthorized = error.status === 401 || (error.message && error.message.includes('401'));
+      const isUnauthorized = error.message && (error.message.includes('401') || error.message.includes('Unauthorized'));
       
       if (isUnauthorized) {
-        localStorage.removeItem('GROQ_API_KEY');
+        localStorage.removeItem('AI_API_KEY');
         setIsKeyValid(false);
         setApiKey(null);
-        setMessages(prev => [...prev, { role: 'assistant', text: "Error: 401 Invalid API Key. The stored key was rejected. Please paste a fresh, valid Groq API Key (gsk_...) below to reset." }]);
+        setMessages(prev => [...prev, { role: 'assistant', text: "Error: 401 Invalid API Key. The stored key was rejected. Please paste a fresh, valid API Key below to reset." }]);
       } else {
         const errorMsg = error.message || "Unable to connect to AI service.";
         setMessages(prev => [...prev, { role: 'assistant', text: `Error: ${errorMsg}. Please check your connection or model availability.` }]);
@@ -167,10 +184,10 @@ export default function AgentChat() {
   };
 
   const handleManualReset = () => {
-    localStorage.removeItem('GROQ_API_KEY');
+    localStorage.removeItem('AI_API_KEY');
     setIsKeyValid(false);
     setApiKey(null);
-    setMessages(prev => [...prev, { role: 'assistant', text: "API Key cleared. Please paste your fresh Groq API Key below." }]);
+    setMessages(prev => [...prev, { role: 'assistant', text: "API Key cleared. Please paste your fresh API Key below." }]);
   };
 
   const handleKeyDown = (e) => {
@@ -245,7 +262,7 @@ export default function AgentChat() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             className="w-full bg-transparent text-[13.5px] text-[#3A3A3A] outline-none py-3 pl-4 pr-11 placeholder-[#A3B0A3]"
-            placeholder={isKeyValid ? "Type your prompt for Arduino..." : "Paste your Groq API Key (gsk_...) here..."}
+            placeholder={isKeyValid ? "Type your prompt for Arduino..." : "Paste your OpenRouter API Key (sk-or-...) here..."}
             disabled={isLoading}
           />
           <button 
