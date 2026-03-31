@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Bot, User, Send, Sparkles, Loader2, RotateCcw } from 'lucide-react';
 import { useStore } from '../store.js';
 
-// Using OpenRouter's Qwen 3 Next 80B model
-const MODEL_NAME = 'qwen/qwen3-next-80b-a3b-instruct:free';
+// Using OpenRouter's GLM 4.5 Air model
+const MODEL_NAME = 'z-ai/glm-4.5-air:free';
 
 const SYSTEM_PROMPT = `You are the PromptDuino AI Agent, a master hardware architect. Your mission is to provide 100% accurate Arduino/ESP32 code and accompanying circuit diagrams.
 
@@ -28,10 +28,10 @@ export default function AgentChat() {
   ]);
 
   // API Key Management 
-  const DEFAULT_KEY = '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';
-  const envKey = import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_GROQ_API_KEY;
+  const DEFAULT_KEY = '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';
+  const envKey = import.meta.env.VITE_OPENROUTER_API_KEY;
   const storageKey = localStorage.getItem('AI_API_KEY');
-  const isValid = (k) => k && k !== 'undefined' && k !== 'null' && (k.startsWith('sk-or-') || k.startsWith('gsk_'));
+  const isValid = (k) => k && k !== 'undefined' && k !== 'null' && k.startsWith('sk-or-');
   
   // Try to use the hardcoded key first if nothing else is valid
   const initialKey = isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : DEFAULT_KEY);
@@ -39,7 +39,6 @@ export default function AgentChat() {
   const [isKeyValid, setIsKeyValid] = useState(isValid(initialKey));
 
   // Dynamic fallback for local development (src/groq-key.js)
-  // We use @vite-ignore to prevent Vercel from failing during the build if the file is missing
   useEffect(() => {
     if (!isKeyValid) {
       const loadLocalKey = async () => {
@@ -47,13 +46,13 @@ export default function AgentChat() {
         try {
           const keyPath = '../groq-key.js';
           const mod = await import(/* @vite-ignore */ keyPath);
-          const localKey = mod.OPENROUTER_API_KEY || mod.GROQ_API_KEY;
+          const localKey = mod.OPENROUTER_API_KEY;
           if (localKey && isValid(localKey)) {
             setApiKey(localKey);
             setIsKeyValid(true);
           }
         } catch (e) {
-          // File missing in production/Vercel - this is expected
+          // File missing in production/Vercel
         }
       };
       loadLocalKey();
@@ -82,9 +81,9 @@ export default function AgentChat() {
       setApiKey(rawInput);
       setIsKeyValid(true);
       setInput('');
-      setMessages(prev => [...prev, { role: 'assistant', text: "API Key saved successfully! I am now connected. How can I help you today?" }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: "API Key saved successfully! How can I help you today?" }]);
     } else {
-      setMessages(prev => [...prev, { role: 'assistant', text: "That doesn't look like a valid API Key (should start with 'sk-or-' or 'gsk_'). Please paste the key directly." }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: "That doesn't look like a valid OpenRouter API Key (should start with 'sk-or-')." }]);
     }
   };
 
@@ -117,8 +116,8 @@ export default function AgentChat() {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey.trim()}`,
-          "HTTP-Referer": "https://promptduino.vercel.app", // standard referer
-          "X-Title": "PromptDuino",
+          "HTTP-Referer": "https://promptduino.vercel.app", 
+          "X-OpenRouter-Title": "PromptDuino",
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
