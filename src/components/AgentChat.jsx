@@ -40,8 +40,10 @@ export default function AgentChat() {
   useEffect(() => {
     if (!isKeyValid) {
       const loadLocalKey = async () => {
+        if (import.meta.env.PROD) return;
         try {
-          const mod = await import(/* @vite-ignore */ '../groq-key.js');
+          const keyPath = '../groq-key.js';
+          const mod = await import(/* @vite-ignore */ keyPath);
           const localKey = mod.OPENROUTER_API_KEY || mod.GROQ_API_KEY;
           if (localKey && isValid(localKey)) {
             setApiKey(localKey);
