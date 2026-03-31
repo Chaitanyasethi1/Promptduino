@@ -33,8 +33,10 @@ export default function AgentChat() {
   const storageKey = localStorage.getItem('AI_API_KEY');
   const isValid = (k) => k && k !== 'undefined' && k !== 'null' && (k.startsWith('sk-or-') || k.startsWith('gsk_'));
   
-  const [apiKey, setApiKey] = useState(isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : DEFAULT_KEY));
-  const [isKeyValid, setIsKeyValid] = useState(true); // Forced to true since we have a default key
+  // Try to use the hardcoded key first if nothing else is valid
+  const initialKey = isValid(envKey) ? envKey : (isValid(storageKey) ? storageKey : DEFAULT_KEY);
+  const [apiKey, setApiKey] = useState(initialKey);
+  const [isKeyValid, setIsKeyValid] = useState(isValid(initialKey));
 
   // Dynamic fallback for local development (src/groq-key.js)
   // We use @vite-ignore to prevent Vercel from failing during the build if the file is missing
